@@ -71,8 +71,8 @@ class PlayerManager(QObject):
         self._should_be_playing = False
         self._provider: MetadataProvider | None = None
 
-        self._state = storage.load_state()
-        self._volume = int(self._state.get("volume", 100))
+        state = storage.load_state()
+        self._volume = int(state.get("volume", 100))
 
         # libmpv падает при не-C числовой локали, а Qt выставляет системную.
         locale.setlocale(locale.LC_NUMERIC, "C")
@@ -90,14 +90,13 @@ class PlayerManager(QObject):
         self._stall_timer = _make_timer(self, STALL_TIMEOUT_MS, self._on_stalled, single_shot=True)
         self._blink_timer = _make_timer(self, BLINK_INTERVAL_MS, self._on_blink)
 
-        self._restore_last_station()
+        self._restore_last_station(state.get("last_station_id"))
 
     # MARK: - Публичное управление
 
     def play(self, station: Station) -> None:
         self.current_station = station
-        self._state["last_station_id"] = station.id
-        storage.save_state(self._state)
+        storage.update_state(last_station_id=station.id)
         self.station_changed.emit(station)
 
         self._set_track(None)
@@ -154,8 +153,7 @@ class PlayerManager(QObject):
             self._mpv["volume"] = self._volume
         except (OSError, RuntimeError):
             return
-        self._state["volume"] = self._volume
-        storage.save_state(self._state)
+        storage.update_state(volume=self._volume)
 
     def shutdown(self) -> None:
         """Снимает всё, что держит ресурсы. Вызывается перед выходом."""
@@ -200,8 +198,7 @@ class PlayerManager(QObject):
             return
         self.play(stations[(index + offset) % len(stations)])
 
-    def _restore_last_station(self) -> None:
-        last_id = self._state.get("last_station_id")
+    def _restore_last_station(self, last_id: str | None) -> None:
         if not last_id:
             return
         for station in self._store.stations:

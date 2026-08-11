@@ -6,6 +6,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import json
 import os
 from pathlib import Path
@@ -35,7 +36,10 @@ def write_json(path: Path, data: Any) -> bool:
         tmp.replace(path)
         return True
     except OSError:
-        tmp.unlink(missing_ok=True)
+        # Уборка сама может не пройти (каталога нет, прав нет) — но обещание
+        # функции «вернуть False, а не бросить» важнее удалённого хвоста.
+        with contextlib.suppress(OSError):
+            tmp.unlink(missing_ok=True)
         return False
 
 
@@ -48,5 +52,16 @@ def load_state() -> dict[str, Any]:
     return state if isinstance(state, dict) else {}
 
 
-def save_state(state: dict[str, Any]) -> None:
-    write_json(state_path(), state)
+def update_state(**values: Any) -> bool:
+    """Меняет только переданные ключи, не трогая остальные.
+
+    У `state.json` несколько независимых писателей: плеер хранит громкость
+    и последнюю станцию, обновление каталогов — время последней проверки.
+    Записывать файл целиком нельзя: писатель сохранил бы свою копию, снятую
+    при запуске, и затёр бы чужие ключи, изменившиеся с тех пор. Поэтому
+    состояние перечитывается перед каждой записью, а функции «сохранить всё»
+    здесь нет намеренно.
+    """
+    state = load_state()
+    state.update(values)
+    return write_json(state_path(), state)

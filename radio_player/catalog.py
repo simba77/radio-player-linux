@@ -162,9 +162,7 @@ class CatalogUpdater(QObject):
         storage.write_json(_etags_path(), etags)
 
     def _finish(self) -> None:
-        state = storage.load_state()
-        state["catalogs_updated_at"] = _now()
-        storage.save_state(state)
+        storage.update_state(catalogs_updated_at=_now())
         self.finished.emit(load_initial(), self._changed)
 
 
