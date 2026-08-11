@@ -511,15 +511,21 @@ class CatalogsTab(QWidget):
         if url in self._settings.extra_catalog_urls or url in catalog.DEFAULT_CATALOG_URLS:
             return
         self._settings.extra_catalog_urls.append(url)
-        settings_module.save(self._settings)
-        self._reload()
+        self._apply_catalog_list()
+        # Добавленный каталог нужен пользователю сейчас, а не после перезапуска.
+        self._update_now()
 
     def _remove_catalog(self) -> None:
         item = self._list.currentItem()
         if item is None or item.text() not in self._settings.extra_catalog_urls:
             return
         self._settings.extra_catalog_urls.remove(item.text())
+        self._apply_catalog_list()
+
+    def _apply_catalog_list(self) -> None:
+        """Сохраняет список источников и сообщает о нём тем, кто его использует."""
         settings_module.save(self._settings)
+        self._updater.set_extra_urls(self._settings.extra_catalog_urls)
         self._reload()
 
     def _update_now(self) -> None:

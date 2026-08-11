@@ -11,15 +11,11 @@ import pytest
 
 pytest.importorskip("PySide6.QtDBus")
 
-from PySide6.QtCore import QCoreApplication, QObject, Signal  # noqa: E402
+from PySide6.QtCore import QObject, Signal  # noqa: E402
 
 from radio_player.power import SleepInhibitor  # noqa: E402
 
-
-@pytest.fixture(scope="module", autouse=True)
-def qt_app():
-    app = QCoreApplication.instance() or QCoreApplication([])
-    yield app
+pytestmark = pytest.mark.usefixtures("qt_app")
 
 
 class FakePlayer(QObject):

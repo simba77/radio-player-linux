@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json
 import time
+from collections.abc import Sequence
 from importlib import resources
 from pathlib import Path
 
@@ -82,29 +83,49 @@ def load_initial() -> list[Catalog]:
 
 
 class CatalogUpdater(QObject):
-    """Фоновое обновление каталогов по HTTP с валидацией ETag."""
+    """Фоновое обновление каталогов по HTTP с валидацией ETag.
+
+    Список источников — встроенные каталоги плюс добавленные пользователем.
+    Дополнительные держим отдельно и меняем через `set_extra_urls`: список
+    правится в настройках уже после запуска, а копия, снятая при создании,
+    об этих правках не узнала бы.
+    """
 
     #: Загрузка завершилась: список каталогов и признак, что что-то изменилось.
     finished = Signal(list, bool)
 
-    def __init__(self, urls: tuple[str, ...] = DEFAULT_CATALOG_URLS, parent: QObject | None = None) -> None:
+    def __init__(self, extra_urls: Sequence[str] = (), parent: QObject | None = None) -> None:
         super().__init__(parent)
-        self._urls = urls
+        self._extra_urls = tuple(extra_urls)
         self._network = QNetworkAccessManager(self)
         self._replies: set[QNetworkReply] = set()
         self._pending = 0
         self._changed = False
 
     @property
+    def urls(self) -> tuple[str, ...]:
+        """Все источники: встроенные, затем пользовательские."""
+        return (*DEFAULT_CATALOG_URLS, *self._extra_urls)
+
+    def set_extra_urls(self, urls: Sequence[str]) -> None:
+        """Заменяет список пользовательских каталогов.
+
+        Уже отправленные запросы не отменяет: текущий цикл дойдёт до конца
+        со старым списком, а новый начнётся с обновлённым.
+        """
+        self._extra_urls = tuple(urls)
+
+    @property
     def is_running(self) -> bool:
         return self._pending > 0
 
     def update_now(self) -> None:
-        if self.is_running or not self._urls:
+        urls = self.urls
+        if self.is_running or not urls:
             return
-        self._pending = len(self._urls)
+        self._pending = len(urls)
         self._changed = False
-        for url in self._urls:
+        for url in urls:
             self._fetch(url)
 
     def cancel(self) -> None:

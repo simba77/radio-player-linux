@@ -11,17 +11,12 @@ import pytest
 
 pytest.importorskip("PySide6.QtDBus")
 
-from PySide6.QtCore import QCoreApplication  # noqa: E402
 from PySide6.QtGui import QImage  # noqa: E402
 
 from radio_player import mpris  # noqa: E402
 from radio_player.models import Station, TrackInfo  # noqa: E402
 
-
-@pytest.fixture(scope="module", autouse=True)
-def qt_app():
-    app = QCoreApplication.instance() or QCoreApplication([])
-    yield app
+pytestmark = pytest.mark.usefixtures("qt_app")
 
 
 def test_invalidated_properties_is_string_array():

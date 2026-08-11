@@ -48,7 +48,7 @@ def main() -> int:
     player = PlayerManager(store)
     install_network_monitor(player, app)
 
-    updater = catalog.CatalogUpdater(_catalog_urls(settings), parent=app)
+    updater = catalog.CatalogUpdater(settings.extra_catalog_urls, parent=app)
     updater.finished.connect(lambda catalogs, changed: changed and store.set_catalogs(catalogs))
 
     window = MainWindow(player, store, settings, updater)
@@ -94,11 +94,6 @@ def main() -> int:
     wakeup.timeout.connect(lambda: None)
 
     return app.exec()
-
-
-def _catalog_urls(settings: settings_module.Settings) -> tuple[str, ...]:
-    """Встроенные каталоги плюс добавленные пользователем."""
-    return (*catalog.DEFAULT_CATALOG_URLS, *settings.extra_catalog_urls)
 
 
 def _schedule_catalog_update(updater: catalog.CatalogUpdater, settings: settings_module.Settings) -> None:
