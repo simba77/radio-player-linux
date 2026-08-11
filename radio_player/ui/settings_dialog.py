@@ -5,12 +5,14 @@ from __future__ import annotations
 from contextlib import contextmanager
 from pathlib import Path
 
-from PySide6.QtCore import QCoreApplication, Qt, QTimer
+from PySide6.QtCore import Qt, QTimer
+from PySide6.QtGui import QPalette
 from PySide6.QtWidgets import (
     QAbstractItemView,
     QCheckBox,
     QComboBox,
     QDialog,
+    QDialogButtonBox,
     QFileDialog,
     QFormLayout,
     QHBoxLayout,
@@ -130,6 +132,71 @@ class GeneralTab(QWidget):
         settings_module.save(self._settings)
         # Перерисовать уже собранный интерфейс нечем — предупреждаем честно.
         self._language_hint.show()
+
+
+class StationDialog(QDialog):
+    """Название и адрес потока в одном окне.
+
+    Раньше станция заводилась двумя `QInputDialog` подряд: ответив на первый,
+    пользователь уже не мог вернуться и поправить название, а отмена на втором
+    шаге теряла введённое. Здесь оба поля видны сразу, «ОК» неактивна, пока
+    введено не всё, а причина написана прямо под полями.
+    """
+
+    def __init__(self, parent: QWidget | None = None, *, name: str = "", url: str = "") -> None:
+        super().__init__(parent)
+        self.setWindowTitle(self.tr("New station"))
+        self.setMinimumWidth(380)
+
+        self._name = QLineEdit(name)
+        self._name.setPlaceholderText(self.tr("Station name"))
+        self._url = QLineEdit(url)
+        self._url.setPlaceholderText("https://example.org/stream.m3u8")
+
+        self._hint = QLabel()
+        self._hint.setWordWrap(True)
+        # Подсказку приглушаем прозрачностью, а не фиксированным цветом: так она
+        # читается и в светлой, и в тёмной теме.
+        palette = self._hint.palette()
+        muted = palette.color(QPalette.ColorRole.WindowText)
+        muted.setAlphaF(0.65)
+        palette.setColor(QPalette.ColorRole.WindowText, muted)
+        self._hint.setPalette(palette)
+
+        self._buttons = QDialogButtonBox(
+            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
+        )
+        self._buttons.accepted.connect(self.accept)
+        self._buttons.rejected.connect(self.reject)
+
+        form = QFormLayout()
+        form.addRow(self.tr("Name:"), self._name)
+        form.addRow(self.tr("Stream URL:"), self._url)
+
+        layout = QVBoxLayout(self)
+        layout.addLayout(form)
+        layout.addWidget(self._hint)
+        layout.addWidget(self._buttons)
+
+        self._name.textChanged.connect(self._validate)
+        self._url.textChanged.connect(self._validate)
+        self._validate()
+
+    def values(self) -> tuple[str, str]:
+        return self._name.text().strip(), self._url.text().strip()
+
+    def _validate(self) -> None:
+        name, url = self.values()
+        problem = ""
+        if url and not url.startswith(("http://", "https://")):
+            problem = self.tr("The URL must start with http:// or https://")
+
+        # Красный поверх приглушённой палитры — тот же цвет, что у ошибки плеера.
+        self._hint.setStyleSheet("color: #e05252;" if problem else "")
+        self._hint.setText(problem or self.tr("A direct stream URL or an HLS playlist (.m3u8)."))
+
+        ok = self._buttons.button(QDialogButtonBox.StandardButton.Ok)
+        ok.setEnabled(bool(name) and bool(url) and not problem)
 
 
 class StationsTab(QWidget):
@@ -263,17 +330,11 @@ class StationsTab(QWidget):
         QTimer.singleShot(0, self._reload)
 
     def _add_station(self) -> None:
-        title = self.tr("New station")
-        name, ok = QInputDialog.getText(self, title, self.tr("Name:"))
-        if not ok or not name.strip():
+        dialog = StationDialog(self)
+        if dialog.exec() != QDialog.DialogCode.Accepted:
             return
-        url, ok = QInputDialog.getText(
-            self, title, self.tr("Stream URL:"), QLineEdit.EchoMode.Normal, "https://"
-        )
-        if not ok:
-            return
-        if self._store.add_custom(name, url) is None:
-            QMessageBox.warning(self, title, self.tr("A name and a stream URL are required."))
+        # Пустых значений диалог не выпускает — проверять их здесь уже не за чем.
+        self._store.add_custom(*dialog.values())
 
     def _duplicate_station(self) -> None:
         station_id = self._selected_id()
@@ -413,8 +474,26 @@ class CatalogsTab(QWidget):
             self._status.setText(self.tr("The catalogs have never been updated."))
         else:
             self._status.setText(
-                self.tr("Last update: {ago} ago.").format(ago=_humanize(elapsed))
+                self.tr("Last update: {ago} ago.").format(ago=self._humanize(elapsed))
             )
+
+    def _humanize(self, seconds: float) -> str:
+        """Прошедшее время словами. Формы числа расставляет Qt по правилам языка.
+
+        Метод, а не функция модуля: формы множественного числа lupdate узнаёт
+        только по `self.tr(source, disambiguation, n)` — у
+        `QCoreApplication.translate()` с тем же `n` он их не видит и молча
+        сводит сообщение к одной форме.
+        """
+        minutes = int(seconds // 60)
+        if minutes < 1:
+            return self.tr("less than a minute")
+        if minutes < 60:
+            return self.tr("%n minute(s)", "", minutes)
+        hours = minutes // 60
+        if hours < 24:
+            return self.tr("%n hour(s)", "", hours)
+        return self.tr("%n day(s)", "", hours // 24)
 
     def _add_catalog(self) -> None:
         title = self.tr("New catalog")
@@ -455,18 +534,3 @@ class CatalogsTab(QWidget):
             self._status.setText(self._status.text() + " " + self.tr("No changes."))
 
 
-def _humanize(seconds: float) -> str:
-    """Прошедшее время словами. Формы числа расставляет Qt по правилам языка.
-
-    Литералы стоят прямо в вызовах `translate()`: строки собираются статически,
-    и обёртку вокруг вызова lupdate уже не разберёт.
-    """
-    minutes = int(seconds // 60)
-    if minutes < 1:
-        return QCoreApplication.translate("CatalogsTab", "less than a minute")
-    if minutes < 60:
-        return QCoreApplication.translate("CatalogsTab", "%n minute(s)", None, minutes)
-    hours = minutes // 60
-    if hours < 24:
-        return QCoreApplication.translate("CatalogsTab", "%n hour(s)", None, hours)
-    return QCoreApplication.translate("CatalogsTab", "%n day(s)", None, hours // 24)

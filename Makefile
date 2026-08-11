@@ -13,7 +13,10 @@ PREFIX ?= $(HOME)/.local
 # Утилиты Qt лежат вне PATH (/usr/lib/qt6/bin), поэтому ищем их явно.
 LRELEASE ?= $(shell command -v lrelease 2>/dev/null || echo /usr/lib/qt6/bin/lrelease)
 LUPDATE ?= $(shell command -v pyside6-lupdate 2>/dev/null || echo /usr/lib/qt6/bin/pyside6-lupdate)
+# Компилируются оба языка, а сканируется только русский: английский .ts ведётся
+# руками и содержит одни формы числа — lupdate залил бы в него весь каталог.
 LANGUAGES := ru en
+SCANNED_LANGUAGES := ru
 
 .PHONY: help run probe deps deps-i18n devenv lint test i18n-update i18n-release install uninstall deb clean
 
@@ -61,8 +64,8 @@ $(VENV_PY):
 	$(MAKE) devenv
 
 i18n-update:
-	$(LUPDATE) $$(find radio_player -name '*.py') \
-		$(foreach lang,$(LANGUAGES),-ts translations/radio_player_$(lang).ts)
+	$(LUPDATE) -no-obsolete $$(find radio_player -name '*.py') \
+		$(foreach lang,$(SCANNED_LANGUAGES),-ts translations/radio_player_$(lang).ts)
 
 i18n-release:
 	@mkdir -p radio_player/resources/i18n
