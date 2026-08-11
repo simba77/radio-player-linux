@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+# Пуш поверх незавершённого прогона отменяет предыдущий: проверять
+# промежуточное состояние ветки незачем.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    # Та же схема, что и на машине разработчика: PySide6 берётся из пакетов
+    # дистрибутива, а не из колеса, потому что именно так приложение и живёт
+    # у пользователей.
+    runs-on: ubuntu-24.04
+    env:
+      # Дисплея на раннере нет, а тестам Qt хватает offscreen-платформы.
+      QT_QPA_PLATFORM: offscreen
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            python3-pyside6.qtcore python3-pyside6.qtgui python3-pyside6.qtwidgets \
+            python3-pyside6.qtnetwork python3-pyside6.qtdbus \
+            python3-venv qt6-translations-l10n desktop-file-utils
+
+      - name: Create the development environment
+        run: make devenv
+
+      - name: Lint
+        run: make lint
+
+      # Сюда же входит проверка каталога переводов на дрейф от кода.
+      - name: Test
+        run: make test
+
+      - name: Validate the desktop entry
+        run: desktop-file-validate radio_player/resources/io.github.simba77.RadioPlayer.desktop
+
+      # Упаковка ломается тише кода: заметить это до релиза можно только сборкой.
+      - name: Build the package
+        run: make deb
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: deb
+          path: dist/*.deb
+          if-no-files-found: error

@@ -1,5 +1,7 @@
 # Radio Player (Linux)
 
+[![CI](https://github.com/simba77/radio-player-linux/actions/workflows/ci.yml/badge.svg)](https://github.com/simba77/radio-player-linux/actions/workflows/ci.yml)
+
 A minimal internet radio player: a system tray icon plus a regular window.
 Plays HLS and direct HTTP(S) streams, shows the current track with cover art and survives
 network drops on its own.
