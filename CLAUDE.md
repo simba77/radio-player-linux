@@ -1,69 +1,62 @@
 # CLAUDE.md
 
-План разработки и архитектурные решения ведутся локально в `.claude/PLAN.md` — в репозиторий
-эта папка не входит. Ссылки вида «PLAN.md §3» ниже указывают на него. План ведущий: при
-расхождении кода и плана нужно либо править код, либо осознанно обновить план.
+## Development approach
 
-## Подход к разработке
+Carried over from the macOS version of the project:
 
-Перенесён из macOS-версии проекта:
+- **States, not just the happy path.** Every feature covers errors, loading and edge cases.
+  Adding playback means adding `is_loading` and `error_message`; adding a list means adding
+  an empty state.
+- **State consistency.** If `is_playing == True`, something must actually be playing. Observed
+  mpv state beats optimistic flags.
+- **Resource lifecycle.** Every `observe_property`, `QTimer` and D-Bus object is torn down
+  explicitly.
+- **Fix bugs found along the way.** A bug noticed while working on a task gets fixed and
+  mentioned in the summary.
 
-- **Состояния, а не только happy path.** Каждая фича требует обработки ошибок, загрузки и граничных
-  случаев. Добавляется воспроизведение — нужны `is_loading` и `error_message`. Добавляется список —
-  нужно состояние «пусто».
-- **Консистентность состояния.** Если `is_playing == True`, что-то обязано играть. Наблюдение за
-  реальным состоянием mpv (`core-idle`, `paused-for-cache`, `idle-active`) важнее оптимистичных флагов.
-- **Жизненный цикл ресурсов.** Каждый `observe_property`, `QTimer`, D-Bus-объект — снимается явно.
-  Паттерн: `_stop_observing()` перед любым `play()` и в `stop()`.
-- **Попутные баги — фиксить.** Обнаружен баг при работе над задачей — исправить и указать в описании.
+## Language
 
-## Build & Run
+Code comments, docstrings and user-facing strings are in Russian; talk to the user in Russian too.
+Commit messages, this file and `README.md` are in English.
 
-```bash
-make deps    # системные зависимости (нужен sudo)
-make devenv  # .venv с pytest и ruff
-make run     # запустить приложение
-make probe   # диагностика метаданных потока, scripts/probe_metadata.py
-make lint    # ruff
-make test    # pytest
-```
+## Commits
 
-Само приложение запускается на системном Python: PySide6 и python-mpv стоят из репозиториев
-(`/usr/lib/python3/dist-packages`). Дистрибутивный Python запрещает ставить пакеты глобально
-(PEP 668), поэтому pytest и ruff живут в `.venv`, созданном с `--system-site-packages` —
-без этого флага системные PySide6 и mpv в venv не видны.
+Conventional Commits: `feat(power): inhibit system sleep during playback`.
 
-**libmpv падает при не-C числовой локали**, а Qt выставляет системную. Перед созданием `mpv.MPV()`
-обязателен `locale.setlocale(locale.LC_NUMERIC, "C")` — это уже сделано в `player.py`.
+## Environment
 
-**Сигнатуры D-Bus проверять по `busctl --user monitor`.** Пустой список Python Qt отправляет как
-массив вариантов (`av`), а не строк (`as`). Из-за этого `PropertiesChanged` уходил с сигнатурой
-`sa{sv}av`: `dbus-monitor` его показывал, свойства читались, но plasmashell и kded молча
-игнорировали сигнал — плеер не попадал в апплет «Медиаплеер» и не получал медиаклавиши. Пустой
-массив строк собирается через `QDBusArgument` (`mpris._empty_string_list`).
+The app runs on the system Python: PySide6 and python-mpv come from distro packages. Installing
+packages globally is refused (PEP 668), so pytest and ruff live in a `.venv` created with
+`--system-site-packages` — without that flag the system PySide6 and mpv are invisible inside it.
+Build targets: `make help`.
 
-**Числовые типы D-Bus PySide6 тоже не угадывает.** Python-число уходит как `int32`, поэтому вызов
-метода с сигнатурой `u` (например `PowerManagement.Inhibit.UnInhibit`) отлетает с `UnknownMethod`.
-Единственный рабочий способ задать тип — метаобъект интерфейса:
-`QMetaObject.invokeMethod(interface, "UnInhibit", Q_ARG("uint", cookie))`. И `asyncCall` в PySide6
-принимает только имя метода — аргументы передаются через `asyncCallWithArgumentList`.
+Development happens on KDE neon (Plasma 6, Wayland). Also verify on X11 and GNOME. On GNOME
+`QSystemTrayIcon` is unavailable without the AppIndicator extension, so the app must stay fully
+usable with no tray.
 
-## Архитектура
+## Traps
 
-Поток данных повторяет macOS-версию, `@Published` заменён на сигналы Qt:
+**libmpv crashes under a non-C numeric locale**, and Qt sets the system one. Call
+`locale.setlocale(locale.LC_NUMERIC, "C")` before creating `mpv.MPV()`.
 
-`__main__` → `StationStore` → `PlayerManager` (владеет store) → UI через сигналы.
+**Check D-Bus signatures with `busctl --user monitor`** — `dbus-monitor` does not show them.
+Qt marshals an empty Python list as an array of variants (`av`) rather than strings (`as`), which
+makes `PropertiesChanged` go out as `sa{sv}av`: properties still read fine and `dbus-monitor` shows
+the signal, but plasmashell and kded silently ignore it — the player never appears in the
+"Media Player" applet and never receives media keys.
 
-- `station_store.py` — мержит удалённые каталоги станций с локальным оверлеем. **Дефолтные станции
-  не хардкодятся** — они приходят из JSON-каталогов в репозитории; формат и алгоритм мержа
-  описаны в `PLAN.md` §3.
-- `player.py` — обёртка над libmpv: воспроизведение, состояния, реконнект, метаданные.
-- `mpris.py` — MPRIS2 поверх `PlayerManager`; аналог `MPRemoteCommandCenter` на macOS.
-- `power.py` — запрет засыпания на время эфира. На Linux это надо просить явно: ни libmpv,
-  ни активный MPRIS-плеер систему не удерживают. Подробности — в `PLAN.md` §4.1.
-- `paths.py` — все пути к пользовательским файлам, XDG. Никаких путей в других модулях.
+**PySide6 does not infer D-Bus numeric types either.** A Python number is sent as `int32`, so
+calling a method with signature `u` fails with `UnknownMethod`. The type can only be forced through
+the interface metaobject: `QMetaObject.invokeMethod(interface, "UnInhibit", Q_ARG("uint", cookie))`.
+And `asyncCall` takes only the method name — pass arguments via `asyncCallWithArgumentList`.
 
-## Целевые окружения
+**System sleep must be inhibited explicitly** (`power.py`): neither libmpv nor an active MPRIS
+player holds the system awake, and idle auto-suspend cuts the stream off.
 
-Разработка идёт на KDE neon (Plasma 6, Wayland). Проверять также X11 и GNOME. В GNOME без расширения
-AppIndicator `QSystemTrayIcon` недоступен — приложение обязано оставаться работоспособным без трея.
+## Decisions not visible from the code
+
+- Data flow: `__main__` → `StationStore` → `PlayerManager` (owns the store) → UI via signals.
+  Qt signals replace `@Published` from the macOS version.
+- **Default stations are never hardcoded** — they come from JSON catalogs and are merged with the
+  user's local overlay; a catalog update never overwrites the user's edits.
+- **All paths to user files live in `paths.py`** (XDG). No other module builds paths.

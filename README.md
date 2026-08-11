@@ -1,43 +1,45 @@
 # Radio Player (Linux)
 
-Минималистичный плеер интернет-радио: иконка в системном лотке плюс обычное окно.
-Порт [macOS-версии](https://github.com/simba77/radio-player) с тем же набором поддерживаемых
-потоков.
+A minimal internet radio player: a system tray icon plus a regular window.
+A port of the [macOS version](https://github.com/simba77/radio-player) supporting the same
+set of streams.
 
-## Возможности
+The user interface is in Russian.
 
-- **Воспроизведение** HLS (`.m3u8`) и прямых HTTP(S)-потоков через libmpv
-- **Текущий трек** — исполнитель, название и обложка прямо в окне; клик по названию копирует его
-- **Автопереподключение** при обрыве сети, с индикацией в трее
-- **Каталоги станций** — список обновляется из репозитория, ваши правки не затираются
-- **Свои станции** — добавление вручную и импорт из `.m3u`, `.m3u8`, `.pls`, JSON macOS-версии
-- **Системная интеграция** — MPRIS2: медиаклавиши и виджет «Медиаплеер» в Plasma
-- **Компьютер не засыпает**, пока идёт эфир (экран при этом гаснет и блокируется как обычно)
-- **Автозапуск** при входе в систему
-- Горячие клавиши: `P` — играть/остановить, `Q` — выход
+## Features
 
-## Установка
+- **Playback** of HLS (`.m3u8`) and direct HTTP(S) streams via libmpv
+- **Current track** — artist, title and cover art in the window; click the title to copy it
+- **Automatic reconnect** when the network drops, with tray indication
+- **Station catalogs** — the list updates from a repository without overwriting your edits
+- **Your own stations** — added by hand or imported from `.m3u`, `.m3u8`, `.pls`, macOS-version JSON
+- **Desktop integration** — MPRIS2: media keys and the "Media Player" applet in Plasma
+- **The machine stays awake** while on air (the screen still blanks and locks as usual)
+- **Autostart** on login
+- Shortcuts: `P` — play/stop, `Q` — quit
 
-### Из .deb
+## Installation
+
+### From .deb
 
 ```bash
 make deb
 sudo apt install ./dist/radio-player_0.1.0_all.deb
 ```
 
-### В домашний каталог
+### Into your home directory
 
 ```bash
-make deps      # системные зависимости, нужен sudo
-make install   # в ~/.local (PREFIX=... чтобы выбрать другой путь)
+make deps      # system dependencies, needs sudo
+make install   # into ~/.local (use PREFIX=... for another location)
 ```
 
-Проверьте, что `~/.local/bin` есть в `PATH`. Удалить — `make uninstall`;
-настройки в `~/.config/radio-player` при этом сохраняются.
+Make sure `~/.local/bin` is in your `PATH`. To remove it, run `make uninstall`;
+settings in `~/.config/radio-player` are kept.
 
-### Зависимости
+### Dependencies
 
-Python 3.12+, PySide6 (Qt 6), libmpv 0.36+. В Ubuntu/KDE neon ставятся одной командой:
+Python 3.12+, PySide6 (Qt 6), libmpv 0.36+. On Ubuntu/KDE neon a single command installs them:
 
 ```bash
 sudo apt install libmpv2 python3-mpv \
@@ -45,28 +47,28 @@ sudo apt install libmpv2 python3-mpv \
     python3-pyside6.qtnetwork python3-pyside6.qtdbus
 ```
 
-## Запуск из исходников
+## Running from source
 
 ```bash
 make run
 ```
 
-## Разработка
+## Development
 
 ```bash
-make devenv  # .venv с pytest и ruff (системные пакеты видны через --system-site-packages)
+make devenv  # .venv with pytest and ruff (system packages visible via --system-site-packages)
 make test
 make lint
-make probe   # диагностика метаданных живого потока
+make probe   # inspect metadata of a live stream
 ```
 
-## Каталоги станций
+## Station catalogs
 
-Список станций собирается из **каталогов** — JSON-файлов, которые приложение скачивает по HTTPS
-и объединяет с вашими правками. Ваши переименования, скрытые станции и порядок хранятся отдельно
-(`~/.config/radio-player/overlay.json`), поэтому обновление каталога их не затирает.
+The station list is assembled from **catalogs** — JSON files the app downloads over HTTPS and
+merges with your edits. Your renames, hidden stations and ordering are stored separately
+(`~/.config/radio-player/overlay.json`), so a catalog update never overwrites them.
 
-Формат каталога:
+Catalog format:
 
 ```json
 {
@@ -84,28 +86,29 @@ make probe   # диагностика метаданных живого пото
 }
 ```
 
-`id` станции — стабильный ключ: по нему приложение узнаёт станцию между обновлениями, поэтому
-менять его нельзя, а `name` и `url` — можно. Свой каталог добавляется в **Настройки → Каталоги**
-по ссылке на такой файл.
+A station's `id` is its stable key: the app recognises the station across updates by it, so it must
+never change, while `name` and `url` may. Add your own catalog under **Настройки → Каталоги**
+(Settings → Catalogs) by pointing it at such a file.
 
-Адрес станции из каталога не редактируется напрямую: чтобы его изменить, нажмите «Сделать копию» —
-появится ваша станция с тем же потоком, а оригинал скроется. Так правки не конфликтуют
-с обновлениями каталога.
+The URL of a catalog station cannot be edited directly. To change it, use «Сделать копию»
+(Duplicate): you get your own station with the same stream while the original is hidden. That way
+your edits never conflict with catalog updates.
 
-## Где что лежит
+## Files
 
-| Путь | Что |
+| Path | Contents |
 |---|---|
-| `~/.config/radio-player/settings.json` | настройки приложения |
-| `~/.config/radio-player/overlay.json` | ваши правки списка станций |
-| `~/.config/radio-player/state.json` | громкость, последняя станция |
-| `~/.cache/radio-player/` | скачанные каталоги и обложки |
+| `~/.config/radio-player/settings.json` | application settings |
+| `~/.config/radio-player/overlay.json` | your edits to the station list |
+| `~/.config/radio-player/state.json` | volume, last station |
+| `~/.cache/radio-player/` | downloaded catalogs and cover art |
 
-## Окружения
+## Environments
 
-Разрабатывается и проверяется на KDE neon (Plasma 6, Wayland). В GNOME системный лоток недоступен
-без расширения AppIndicator — там приложение работает окном и через MPRIS, без иконки в панели.
+Developed and verified on KDE neon (Plasma 6, Wayland). On GNOME the system tray is unavailable
+without the AppIndicator extension — there the app runs as a window and through MPRIS, with no
+panel icon.
 
-## Стек
+## Stack
 
 Python · PySide6 (Qt 6) · libmpv · MPRIS2
