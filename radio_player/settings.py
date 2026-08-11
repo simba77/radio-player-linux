@@ -9,7 +9,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
-from . import paths, storage
+from . import i18n, paths, storage
 from .models import SCHEMA_VERSION
 
 #: Границы интервала обновления каталогов, часы.
@@ -25,6 +25,8 @@ class Settings:
     update_interval_hours: int = 24
     #: Дополнительные каталоги, добавленные пользователем поверх встроенных.
     extra_catalog_urls: list[str] = field(default_factory=list)
+    #: Язык интерфейса: `auto` (как в системе) или код из `i18n.LANGUAGES`.
+    language: str = i18n.AUTO
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -32,6 +34,7 @@ class Settings:
             "close_to_tray": self.close_to_tray,
             "update_interval_hours": self.update_interval_hours,
             "extra_catalog_urls": list(self.extra_catalog_urls),
+            "language": self.language,
         }
 
     @classmethod
@@ -50,10 +53,15 @@ class Settings:
             if str(url).strip().startswith(("http://", "https://"))
         ]
 
+        language = data.get("language")
+        if language not in (i18n.AUTO, *i18n.LANGUAGES):
+            language = cls.language
+
         return cls(
             close_to_tray=bool(data.get("close_to_tray", True)),
             update_interval_hours=interval,
             extra_catalog_urls=urls,
+            language=language,
         )
 
     @property

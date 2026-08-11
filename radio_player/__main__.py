@@ -8,7 +8,7 @@ import sys
 from PySide6.QtCore import QTimer
 from PySide6.QtWidgets import QApplication, QSystemTrayIcon
 
-from . import APP_ID, APP_NAME, catalog, paths
+from . import APP_ID, APP_NAME, catalog, i18n, paths
 from . import settings as settings_module
 from .mpris import MprisServer
 from .network import install_network_monitor
@@ -30,13 +30,20 @@ def main() -> int:
 
     paths.ensure_dirs()
 
+    settings = settings_module.load()
+    # Язык выбирается до QApplication: свой переводчик Qt ставит при создании
+    # приложения, и позже его уже не сменить.
+    i18n.prepare(settings.language)
+
     app = QApplication(sys.argv)
     app.setApplicationName(APP_NAME)
     app.setDesktopFileName(APP_ID)
     # Окно прячется в трей — Qt не должен завершать приложение при закрытии последнего окна.
     app.setQuitOnLastWindowClosed(False)
 
-    settings = settings_module.load()
+    # Переводчики ставятся до первого виджета: строки берутся при создании.
+    i18n.install(app, settings.language)
+
     store = StationStore(catalog.load_initial())
     player = PlayerManager(store)
     install_network_monitor(player, app)

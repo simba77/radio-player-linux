@@ -78,7 +78,7 @@ class MainWindow(QWidget):
         separator.setFrameShape(QFrame.Shape.HLine)
         separator.setFrameShadow(QFrame.Shadow.Sunken)
 
-        settings_button = QPushButton("Настройки...")
+        settings_button = QPushButton(self.tr("Settings..."))
         settings_button.setIcon(icons.get(icons.SETTINGS))
         settings_button.setFlat(True)
         settings_button.clicked.connect(self.open_settings)
@@ -112,7 +112,7 @@ class MainWindow(QWidget):
         self._list.clear()
         stations = self._store.stations
         if not stations:
-            placeholder = QListWidgetItem("Список станций пуст")
+            placeholder = QListWidgetItem(self.tr("The station list is empty"))
             placeholder.setFlags(Qt.ItemFlag.NoItemFlags)
             self._list.addItem(placeholder)
             return
