@@ -4,7 +4,8 @@ A minimal internet radio player: a system tray icon plus a regular window.
 Plays HLS and direct HTTP(S) streams, shows the current track with cover art and survives
 network drops on its own.
 
-The user interface is in Russian.
+The interface speaks English and Russian, following the system locale unless you pick a language
+in the settings.
 
 ## Features
 
@@ -16,6 +17,7 @@ The user interface is in Russian.
 - **Desktop integration** — MPRIS2: media keys and the "Media Player" applet in Plasma
 - **The machine stays awake** while on air (the screen still blanks and locks as usual)
 - **Autostart** on login
+- **English and Russian** interface, switchable in the settings
 - Shortcuts: `P` — play/stop, `Q` — quit
 
 ## Installation
@@ -61,6 +63,20 @@ make test
 make lint
 make probe   # inspect metadata of a live stream
 ```
+
+### Translations
+
+Interface strings are English literals in the source, translated with Qt Linguist. After adding
+or changing a string:
+
+```bash
+make deps-i18n     # once: pyside6-lupdate, which unlike the Qt one understands Python
+make i18n-update   # pull new strings into translations/*.ts
+linguist translations/radio_player_ru.ts
+make i18n-release  # compile to radio_player/resources/i18n/*.qm
+```
+
+The compiled `.qm` files are committed, so installing the app needs no Qt tooling.
 
 ## Station catalogs
 

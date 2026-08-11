@@ -16,8 +16,16 @@ Carried over from the macOS version of the project:
 
 ## Language
 
-Code comments, docstrings and user-facing strings are in Russian; talk to the user in Russian too.
-Commit messages, this file and `README.md` are in English.
+Code comments and docstrings are in Russian; talk to the user in Russian too. Commit messages,
+this file and `README.md` are in English.
+
+User-facing strings are English literals inside `tr()`, translated through Qt Linguist —
+`translations/*.ts`, compiled to `radio_player/resources/i18n/*.qm`, which are committed so
+installing needs no Qt tooling. After touching any interface string run `make i18n-update`
+(needs `make deps-i18n`) and `make i18n-release`; a test fails if the catalog drifts from the code.
+Outside widgets use `QCoreApplication.translate("Context", "literal")` — lupdate extracts
+statically and cannot see through a wrapper function. Console output is a log, not interface,
+and stays in Russian untranslated.
 
 ## Commits
 
