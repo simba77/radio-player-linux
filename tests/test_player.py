@@ -341,8 +341,30 @@ def test_volume_is_clamped_and_reaches_mpv(player, mpv):
     assert player.volume == 0
 
 
-def test_volume_is_remembered(player, mpv):
+def test_volume_reaches_the_disk_after_the_pause(player, mpv):
     player.set_volume(42)
+    player._volume_save_timer.timeout.emit()
+    assert storage.load_state()["volume"] == 42
+
+
+def test_dragging_the_slider_writes_once(player, mpv, monkeypatch):
+    """Слайдер шлёт значение на каждый пиксель, а запись идёт с fsync
+    в потоке отрисовки — за одно перетаскивание это десятки обращений к диску."""
+    writes = []
+    monkeypatch.setattr(storage, "update_state", lambda **values: writes.append(values))
+
+    for value in range(40, 60):
+        player.set_volume(value)
+    assert writes == []
+
+    player._volume_save_timer.timeout.emit()
+    assert writes == [{"volume": 59}]
+
+
+def test_volume_is_saved_on_shutdown(player, mpv):
+    """Между последним движением слайдера и выходом пауза не успевает истечь."""
+    player.set_volume(42)
+    player.shutdown()
     assert storage.load_state()["volume"] == 42
 
 

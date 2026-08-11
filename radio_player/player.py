@@ -36,6 +36,10 @@ RECONNECT_INTERVAL_MS = 3000
 STALL_TIMEOUT_MS = 6000
 #: Период мигания иконки в трее во время переподключения.
 BLINK_INTERVAL_MS = 600
+#: Пауза перед сохранением громкости. Слайдер шлёт значение на каждый пиксель,
+#: а запись состояния идёт с `fsync` в потоке отрисовки — за одно перетаскивание
+#: это десятки лишних обращений к диску.
+VOLUME_SAVE_DELAY_MS = 800
 
 
 class PlaybackState(Enum):
@@ -132,6 +136,9 @@ class PlayerManager(QObject):
         self._reconnect_timer = _make_timer(self, RECONNECT_INTERVAL_MS, self._attempt_reconnect)
         self._stall_timer = _make_timer(self, STALL_TIMEOUT_MS, self._on_stalled, single_shot=True)
         self._blink_timer = _make_timer(self, BLINK_INTERVAL_MS, self._on_blink)
+        self._volume_save_timer = _make_timer(
+            self, VOLUME_SAVE_DELAY_MS, self._save_volume, single_shot=True
+        )
 
         self._restore_last_station(state.get("last_station_id"))
 
@@ -222,11 +229,21 @@ class PlayerManager(QObject):
             self._mpv["volume"] = self._volume
         except (OSError, RuntimeError):
             return
+        # Звук меняется сразу, диск ждёт: пользователь ведёт слайдер, а не
+        # сохраняет настройку. Отсчёт начинается заново на каждом движении.
+        self._volume_save_timer.start()
+
+    def _save_volume(self) -> None:
         storage.update_state(volume=self._volume)
 
     def shutdown(self) -> None:
         """Снимает всё, что держит ресурсы. Вызывается перед выходом."""
         self._should_be_playing = False
+        # Громкость, изменённую перед самым выходом, теряем только вместе
+        # с несохранённым таймером — поэтому дописываем её здесь.
+        if self._volume_save_timer.isActive():
+            self._volume_save_timer.stop()
+            self._save_volume()
         for timer in (self._reconnect_timer, self._stall_timer, self._blink_timer):
             timer.stop()
         self._stop_metadata()
