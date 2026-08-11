@@ -128,3 +128,9 @@ panel icon.
 ## Stack
 
 Python · PySide6 (Qt 6) · libmpv · MPRIS2
+
+## License
+
+[MIT](LICENSE). The libraries the player builds on keep their own licenses: PySide6 (LGPL-3),
+python-mpv (GPL-2+ or LGPL-2.1+) and libmpv (LGPL-2.1+) are used as system packages and are
+not redistributed with this project.
