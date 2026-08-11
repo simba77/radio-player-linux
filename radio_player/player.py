@@ -12,9 +12,9 @@ from __future__ import annotations
 
 import contextlib
 import locale
-from typing import Protocol
+from collections.abc import Callable
+from typing import Any, Protocol
 
-import mpv
 from PySide6.QtCore import QCoreApplication, QObject, QTimer, Signal, Slot
 from PySide6.QtGui import QImage
 
@@ -38,6 +38,20 @@ class StationsSource(Protocol):
     def stations(self) -> list[Station]: ...
 
 
+def create_mpv() -> Any:
+    """Создаёт проигрыватель libmpv с настройками приложения.
+
+    Импорт локальный намеренно: модуль иначе требовал бы установленный libmpv
+    везде, где его просто импортируют, — а логику состояний и реконнекта
+    проверяют без всякого звука.
+    """
+    import mpv
+
+    # libmpv падает при не-C числовой локали, а Qt выставляет системную.
+    locale.setlocale(locale.LC_NUMERIC, "C")
+    return mpv.MPV(video=False, ytdl=False)
+
+
 class PlayerManager(QObject):
     #: is_playing / is_loading / is_reconnecting изменились.
     state_changed = Signal()
@@ -54,7 +68,13 @@ class PlayerManager(QObject):
     #: Внутренний мост из потока mpv в поток Qt.
     _mpv_signal = Signal(str, object)
 
-    def __init__(self, store: StationsSource, parent: QObject | None = None) -> None:
+    def __init__(
+        self,
+        store: StationsSource,
+        parent: QObject | None = None,
+        *,
+        mpv_factory: Callable[[], Any] = create_mpv,
+    ) -> None:
         super().__init__(parent)
         self._store = store
 
@@ -74,9 +94,7 @@ class PlayerManager(QObject):
         state = storage.load_state()
         self._volume = int(state.get("volume", 100))
 
-        # libmpv падает при не-C числовой локали, а Qt выставляет системную.
-        locale.setlocale(locale.LC_NUMERIC, "C")
-        self._mpv = mpv.MPV(video=False, ytdl=False)
+        self._mpv = mpv_factory()
         self._mpv["volume"] = self._volume
         self._mpv_signal.connect(self._handle_mpv_signal)
         self._mpv.observe_property("core-idle", self._emit_property)
