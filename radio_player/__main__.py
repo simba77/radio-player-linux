@@ -44,11 +44,13 @@ def main() -> int:
     # Переводчики ставятся до первого виджета: строки берутся при создании.
     i18n.install(app, settings.language)
 
-    store = StationStore(catalog.load_initial())
+    # Обновление создаётся первым: оно владеет списком источников, а стартовый
+    # набор каталогов читается из кэша ровно по этому списку.
+    updater = catalog.CatalogUpdater(settings.extra_catalog_urls, parent=app)
+    store = StationStore(catalog.load_initial(updater.urls))
     player = PlayerManager(store)
     install_network_monitor(player, app)
 
-    updater = catalog.CatalogUpdater(settings.extra_catalog_urls, parent=app)
     updater.finished.connect(lambda catalogs, changed: changed and store.set_catalogs(catalogs))
 
     window = MainWindow(player, store, settings, updater)

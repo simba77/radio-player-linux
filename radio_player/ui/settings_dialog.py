@@ -60,7 +60,7 @@ class SettingsDialog(QDialog):
         tabs = QTabWidget()
         tabs.addTab(GeneralTab(settings), self.tr("General"))
         tabs.addTab(StationsTab(store), self.tr("Stations"))
-        tabs.addTab(CatalogsTab(settings, updater), self.tr("Catalogs"))
+        tabs.addTab(CatalogsTab(settings, updater, store), self.tr("Catalogs"))
 
         layout = QVBoxLayout(self)
         layout.addWidget(tabs)
@@ -409,11 +409,13 @@ class CatalogsTab(QWidget):
         self,
         settings: Settings,
         updater: catalog.CatalogUpdater,
+        store: StationStore,
         parent: QWidget | None = None,
     ) -> None:
         super().__init__(parent)
         self._settings = settings
         self._updater = updater
+        self._store = store
 
         self._list = QListWidget()
         # Ссылки длинные: сокращаем их посередине вместо горизонтальной прокрутки,
@@ -523,9 +525,14 @@ class CatalogsTab(QWidget):
         self._apply_catalog_list()
 
     def _apply_catalog_list(self) -> None:
-        """Сохраняет список источников и сообщает о нём тем, кто его использует."""
+        """Сохраняет список источников и сообщает о нём тем, кто его использует.
+
+        Список станций пересобирается сразу: станции удалённого каталога иначе
+        остались бы в списке до перезапуска, а убрать их было бы нечем.
+        """
         settings_module.save(self._settings)
         self._updater.set_extra_urls(self._settings.extra_catalog_urls)
+        self._store.set_catalogs(catalog.load_initial(self._updater.urls))
         self._reload()
 
     def _update_now(self) -> None:

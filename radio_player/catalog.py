@@ -7,6 +7,8 @@
 
 from __future__ import annotations
 
+import contextlib
+import hashlib
 import json
 import time
 from collections.abc import Sequence
@@ -50,25 +52,30 @@ def load_bundled() -> list[Catalog]:
     return catalogs
 
 
-def load_cached() -> list[Catalog]:
-    """Ранее скачанные каталоги. Порядок — как в `DEFAULT_CATALOG_URLS`."""
+def load_cached(urls: Sequence[str]) -> list[Catalog]:
+    """Ранее скачанные каталоги — только для перечисленных источников.
+
+    Читаем строго по списку, а не всё, что лежит в кэше: иначе каталог,
+    удалённый пользователем из настроек, продолжал бы поставлять станции
+    из своего файла, и убрать их было бы нечем. Порядок — как в `urls`,
+    от него зависит, кто побеждает при совпадении id станций.
+    """
     catalogs = []
-    for path in sorted(_cache_dir().glob("*.json")):
-        if path.name == _ETAGS_FILE:
-            continue
-        catalog = Catalog.from_dict(storage.read_json(path))
+    for url in urls:
+        catalog = Catalog.from_dict(storage.read_json(_cache_path(url)))
         if catalog is not None:
             catalogs.append(catalog)
     return catalogs
 
 
-def load_initial() -> list[Catalog]:
+def load_initial(urls: Sequence[str] = DEFAULT_CATALOG_URLS) -> list[Catalog]:
     """Каталоги для старта: кэш, если он есть, иначе встроенные копии.
 
     Кэш заведомо не старше встроенной копии — он появляется только после
     успешной загрузки из сети.
     """
-    cached = load_cached()
+    prune_cache(urls)
+    cached = load_cached(urls)
     if not cached:
         return load_bundled()
 
@@ -170,7 +177,7 @@ class CatalogUpdater(QObject):
             # Битый или слишком новый каталог: остаёмся на прежней копии.
             return
 
-        if not storage.write_json(_cache_dir() / f"{catalog.id}.json", data):
+        if not storage.write_json(_cache_path(url), data):
             return
         self._changed = True
 
@@ -184,7 +191,7 @@ class CatalogUpdater(QObject):
 
     def _finish(self) -> None:
         storage.update_state(catalogs_updated_at=_now())
-        self.finished.emit(load_initial(), self._changed)
+        self.finished.emit(load_initial(self.urls), self._changed)
 
 
 def seconds_since_update() -> float | None:
@@ -195,12 +202,40 @@ def seconds_since_update() -> float | None:
     return max(0.0, _now() - updated_at)
 
 
+def prune_cache(urls: Sequence[str]) -> None:
+    """Удаляет из кэша файлы источников, которых больше нет в списке.
+
+    Кэш — производная от списка каталогов, а не самостоятельное хранилище:
+    осиротевший файл иначе лежал бы вечно, занимая место и сбивая с толку.
+    """
+    keep = {_cache_path(url).name for url in urls}
+    keep.add(_ETAGS_FILE)
+    for path in _cache_dir().glob("*.json"):
+        if path.name not in keep:
+            with contextlib.suppress(OSError):
+                path.unlink()
+
+    etags = _etags()
+    stale = set(etags) - set(urls)
+    if stale:
+        for url in stale:
+            del etags[url]
+        storage.write_json(_etags_path(), etags)
+
+
 def _now() -> float:
     return time.time()
 
 
 def _cache_dir() -> Path:
     return paths.cache_dir() / "catalogs"
+
+
+def _cache_path(url: str) -> Path:
+    """Файл кэша именуется по адресу источника, а не по id каталога:
+    имя должно однозначно отвечать, из какого источника взят файл."""
+    digest = hashlib.blake2b(url.encode(), digest_size=16).hexdigest()
+    return _cache_dir() / f"{digest}.json"
 
 
 def _etags_path() -> Path:

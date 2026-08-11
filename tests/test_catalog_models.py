@@ -108,15 +108,22 @@ def test_bundled_catalog_is_valid():
     assert len(catalogs[0].stations) == 6
 
 
+BUNDLED_URL = catalog_module.DEFAULT_CATALOG_URLS[0]
+EXTRA_URL = "https://example.org/catalog.json"
+
+
+def put_in_cache(url: str, data: dict) -> None:
+    path = catalog_module._cache_path(url)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(data), encoding="utf-8")
+
+
 def test_load_initial_falls_back_to_bundled_without_cache():
     assert [c.id for c in catalog_module.load_initial()] == ["record"]
 
 
-def test_load_initial_prefers_cache_over_bundled(tmp_path):
-    cached = {**VALID, "id": "record", "revision": 99, "name": "Из кэша"}
-    cache_dir = catalog_module._cache_dir()
-    cache_dir.mkdir(parents=True, exist_ok=True)
-    (cache_dir / "record.json").write_text(json.dumps(cached), encoding="utf-8")
+def test_load_initial_prefers_cache_over_bundled():
+    put_in_cache(BUNDLED_URL, {**VALID, "id": "record", "revision": 99, "name": "Из кэша"})
 
     loaded = catalog_module.load_initial()
     assert [c.name for c in loaded] == ["Из кэша"]
@@ -124,10 +131,57 @@ def test_load_initial_prefers_cache_over_bundled(tmp_path):
 
 def test_bundled_wins_when_it_is_newer_than_cache():
     """После обновления приложения встроенная копия может обогнать кэш."""
-    stale = {**VALID, "id": "record", "revision": 0, "name": "Устаревший кэш"}
-    cache_dir = catalog_module._cache_dir()
-    cache_dir.mkdir(parents=True, exist_ok=True)
-    (cache_dir / "record.json").write_text(json.dumps(stale), encoding="utf-8")
+    put_in_cache(BUNDLED_URL, {**VALID, "id": "record", "revision": 0, "name": "Устаревший кэш"})
 
     loaded = catalog_module.load_initial()
     assert [c.name for c in loaded] == ["Radio Record"]
+
+
+def test_cache_of_a_removed_catalog_is_ignored():
+    """Каталог, убранный из настроек, больше не поставляет станции."""
+    put_in_cache(EXTRA_URL, {**VALID, "id": "extra", "name": "Лишний"})
+
+    with_extra = catalog_module.load_initial([BUNDLED_URL, EXTRA_URL])
+    assert "extra" in [c.id for c in with_extra]
+
+    without_extra = catalog_module.load_initial([BUNDLED_URL])
+    assert "extra" not in [c.id for c in without_extra]
+
+
+def test_cache_of_a_removed_catalog_is_deleted():
+    put_in_cache(EXTRA_URL, {**VALID, "id": "extra", "name": "Лишний"})
+    catalog_module.load_initial([BUNDLED_URL])
+    assert not catalog_module._cache_path(EXTRA_URL).exists()
+
+
+def test_pruning_keeps_the_etags_file():
+    etags_path = catalog_module._etags_path()
+    etags_path.parent.mkdir(parents=True, exist_ok=True)
+    etags_path.write_text(json.dumps({BUNDLED_URL: '"tag"'}), encoding="utf-8")
+
+    catalog_module.prune_cache([BUNDLED_URL])
+    assert catalog_module._etags() == {BUNDLED_URL: '"tag"'}
+
+
+def test_pruning_forgets_etags_of_removed_catalogs():
+    etags_path = catalog_module._etags_path()
+    etags_path.parent.mkdir(parents=True, exist_ok=True)
+    etags_path.write_text(json.dumps({BUNDLED_URL: '"a"', EXTRA_URL: '"b"'}), encoding="utf-8")
+
+    catalog_module.prune_cache([BUNDLED_URL])
+    assert catalog_module._etags() == {BUNDLED_URL: '"a"'}
+
+
+def test_cached_catalogs_follow_the_order_of_sources():
+    """Порядок источников решает, кто победит при совпадении id станций."""
+    put_in_cache(BUNDLED_URL, {**VALID, "id": "record", "name": "Первый"})
+    put_in_cache(EXTRA_URL, {**VALID, "id": "extra", "name": "Второй"})
+
+    assert [c.name for c in catalog_module.load_cached([BUNDLED_URL, EXTRA_URL])] == [
+        "Первый",
+        "Второй",
+    ]
+    assert [c.name for c in catalog_module.load_cached([EXTRA_URL, BUNDLED_URL])] == [
+        "Второй",
+        "Первый",
+    ]
