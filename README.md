@@ -1,8 +1,8 @@
 # Radio Player (Linux)
 
 A minimal internet radio player: a system tray icon plus a regular window.
-A port of the [macOS version](https://github.com/simba77/radio-player) supporting the same
-set of streams.
+Plays HLS and direct HTTP(S) streams, shows the current track with cover art and survives
+network drops on its own.
 
 The user interface is in Russian.
 
@@ -12,7 +12,7 @@ The user interface is in Russian.
 - **Current track** — artist, title and cover art in the window; click the title to copy it
 - **Automatic reconnect** when the network drops, with tray indication
 - **Station catalogs** — the list updates from a repository without overwriting your edits
-- **Your own stations** — added by hand or imported from `.m3u`, `.m3u8`, `.pls`, macOS-version JSON
+- **Your own stations** — added by hand or imported from `.m3u`, `.m3u8`, `.pls` and JSON
 - **Desktop integration** — MPRIS2: media keys and the "Media Player" applet in Plasma
 - **The machine stays awake** while on air (the screen still blanks and locks as usual)
 - **Autostart** on login
