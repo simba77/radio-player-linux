@@ -36,8 +36,9 @@ make deps      # system dependencies, needs sudo
 make install   # into ~/.local (use PREFIX=... for another location)
 ```
 
-Make sure `~/.local/bin` is in your `PATH`. To remove it, run `make uninstall`;
-settings in `~/.config/radio-player` are kept.
+Make sure `~/.local/bin` is in your `PATH`. To remove it, run `make uninstall` — it also turns
+autostart off, since the entry would point at a command that no longer exists. Settings in
+`~/.config/radio-player` are kept.
 
 ### Dependencies
 

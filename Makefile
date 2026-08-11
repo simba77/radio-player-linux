@@ -76,10 +76,7 @@ install:
 	PREFIX=$(PREFIX) sh scripts/install.sh
 
 uninstall:
-	rm -rf $(PREFIX)/lib/radio-player
-	rm -f $(PREFIX)/bin/radio-player
-	rm -f $(PREFIX)/share/applications/radio-player.desktop
-	@echo "Удалено из $(PREFIX). Настройки в ~/.config/radio-player остались."
+	PREFIX=$(PREFIX) sh scripts/uninstall.sh
 
 deb:
 	sh scripts/build_deb.sh
