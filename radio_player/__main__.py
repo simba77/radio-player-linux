@@ -9,11 +9,11 @@ from PySide6.QtCore import QTimer
 from PySide6.QtWidgets import QApplication, QSystemTrayIcon
 
 from . import APP_NAME, APP_RDNS_ID, APP_VERSION, catalog, i18n, paths
-from . import settings as settings_module
 from .mpris import MprisServer
 from .network import install_network_monitor
 from .player import PlayerManager
 from .power import SleepInhibitor
+from .settings_store import SettingsStore
 from .single_instance import InstanceServer, notify_running_instance
 from .station_store import StationStore
 from .ui.main_window import MainWindow
@@ -30,7 +30,7 @@ def main() -> int:
 
     paths.ensure_dirs()
 
-    settings = settings_module.load()
+    settings = SettingsStore()
     # Язык выбирается до QApplication: свой переводчик Qt ставит при создании
     # приложения, и позже его уже не сменить.
     i18n.prepare(settings.language)
@@ -54,6 +54,7 @@ def main() -> int:
     install_network_monitor(player, app)
 
     updater.finished.connect(lambda catalogs, changed: changed and store.set_catalogs(catalogs))
+    wire_catalog_sources(settings, updater, store)
 
     window = MainWindow(player, store, settings, updater)
 
@@ -100,7 +101,24 @@ def main() -> int:
     return app.exec()
 
 
-def _schedule_catalog_update(updater: catalog.CatalogUpdater, settings: settings_module.Settings) -> None:
+def wire_catalog_sources(
+    settings: SettingsStore, updater: catalog.CatalogUpdater, store: StationStore
+) -> None:
+    """Связывает список каталогов с теми, кто на него опирается.
+
+    Правится он в настройках, а нужен и обновлению, и списку станций — причём
+    сразу: добавленный каталог должен заработать, а удалённый перестать
+    поставлять станции, не дожидаясь перезапуска.
+    """
+
+    def apply() -> None:
+        updater.set_extra_urls(settings.extra_catalog_urls)
+        store.set_catalogs(catalog.load_initial(updater.urls))
+
+    settings.catalog_urls_changed.connect(apply)
+
+
+def _schedule_catalog_update(updater: catalog.CatalogUpdater, settings: SettingsStore) -> None:
     """Обновляет каталоги в фоне, если с прошлого раза прошёл заданный интервал."""
     elapsed = catalog.seconds_since_update()
     if elapsed is None or elapsed >= settings.update_interval_seconds:

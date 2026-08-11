@@ -19,7 +19,7 @@ from PySide6.QtWidgets import (
 from .. import APP_NAME
 from ..catalog import CatalogUpdater
 from ..player import PlayerManager
-from ..settings import Settings
+from ..settings_store import SettingsStore
 from ..station_store import StationStore
 from . import icons
 from .settings_dialog import SettingsDialog
@@ -47,7 +47,7 @@ class MainWindow(QWidget):
         self,
         player: PlayerManager,
         store: StationStore,
-        settings: Settings,
+        settings: SettingsStore,
         updater: CatalogUpdater,
     ) -> None:
         super().__init__()

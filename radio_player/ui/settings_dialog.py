@@ -30,8 +30,8 @@ from PySide6.QtWidgets import (
 )
 
 from .. import autostart, catalog, i18n, playlist_io
-from .. import settings as settings_module
-from ..settings import MAX_UPDATE_INTERVAL_HOURS, MIN_UPDATE_INTERVAL_HOURS, Settings
+from ..settings import MAX_UPDATE_INTERVAL_HOURS, MIN_UPDATE_INTERVAL_HOURS
+from ..settings_store import SettingsStore
 from ..station_store import StationStore
 
 #: Роль Qt для хранения id станции в строке списка.
@@ -45,7 +45,7 @@ class SettingsDialog(QDialog):
     def __init__(
         self,
         store: StationStore,
-        settings: Settings,
+        settings: SettingsStore,
         updater: catalog.CatalogUpdater,
         parent: QWidget | None = None,
     ) -> None:
@@ -60,14 +60,14 @@ class SettingsDialog(QDialog):
         tabs = QTabWidget()
         tabs.addTab(GeneralTab(settings), self.tr("General"))
         tabs.addTab(StationsTab(store), self.tr("Stations"))
-        tabs.addTab(CatalogsTab(settings, updater, store), self.tr("Catalogs"))
+        tabs.addTab(CatalogsTab(settings, updater), self.tr("Catalogs"))
 
         layout = QVBoxLayout(self)
         layout.addWidget(tabs)
 
 
 class GeneralTab(QWidget):
-    def __init__(self, settings: Settings, parent: QWidget | None = None) -> None:
+    def __init__(self, settings: SettingsStore, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self._settings = settings
 
@@ -120,16 +120,13 @@ class GeneralTab(QWidget):
         )
 
     def _on_close_to_tray_toggled(self, enabled: bool) -> None:
-        self._settings.close_to_tray = enabled
-        settings_module.save(self._settings)
+        self._settings.set_close_to_tray(enabled)
 
     def _on_interval_changed(self, hours: int) -> None:
-        self._settings.update_interval_hours = hours
-        settings_module.save(self._settings)
+        self._settings.set_update_interval_hours(hours)
 
     def _on_language_changed(self) -> None:
-        self._settings.language = self._language.currentData()
-        settings_module.save(self._settings)
+        self._settings.set_language(self._language.currentData())
         # Перерисовать уже собранный интерфейс нечем — предупреждаем честно.
         self._language_hint.show()
 
@@ -407,15 +404,13 @@ class CatalogsTab(QWidget):
 
     def __init__(
         self,
-        settings: Settings,
+        settings: SettingsStore,
         updater: catalog.CatalogUpdater,
-        store: StationStore,
         parent: QWidget | None = None,
     ) -> None:
         super().__init__(parent)
         self._settings = settings
         self._updater = updater
-        self._store = store
 
         self._list = QListWidget()
         # Ссылки длинные: сокращаем их посередине вместо горизонтальной прокрутки,
@@ -510,30 +505,16 @@ class CatalogsTab(QWidget):
                 self, title, self.tr("The link must start with http:// or https://")
             )
             return
-        if url in self._settings.extra_catalog_urls or url in catalog.DEFAULT_CATALOG_URLS:
+        if url in catalog.DEFAULT_CATALOG_URLS or not self._settings.add_catalog_url(url):
             return
-        self._settings.extra_catalog_urls.append(url)
-        self._apply_catalog_list()
+        self._reload()
         # Добавленный каталог нужен пользователю сейчас, а не после перезапуска.
         self._update_now()
 
     def _remove_catalog(self) -> None:
         item = self._list.currentItem()
-        if item is None or item.text() not in self._settings.extra_catalog_urls:
-            return
-        self._settings.extra_catalog_urls.remove(item.text())
-        self._apply_catalog_list()
-
-    def _apply_catalog_list(self) -> None:
-        """Сохраняет список источников и сообщает о нём тем, кто его использует.
-
-        Список станций пересобирается сразу: станции удалённого каталога иначе
-        остались бы в списке до перезапуска, а убрать их было бы нечем.
-        """
-        settings_module.save(self._settings)
-        self._updater.set_extra_urls(self._settings.extra_catalog_urls)
-        self._store.set_catalogs(catalog.load_initial(self._updater.urls))
-        self._reload()
+        if item is not None and self._settings.remove_catalog_url(item.text()):
+            self._reload()
 
     def _update_now(self) -> None:
         self._updater.update_now()
