@@ -15,7 +15,9 @@ rm -f "$PREFIX/share/applications/radio-player.desktop"
 
 # Файл автозапуска создаёт само приложение, и он указывает на команду, которую
 # мы только что удалили. Оставить его — значит заставлять сессию при каждом
-# входе запускать несуществующий бинарник.
+# входе запускать несуществующий бинарник. Второе имя — из версий до
+# перехода на reverse-DNS.
+rm -f "$config_home/autostart/io.github.simba77.RadioPlayer.desktop"
 rm -f "$config_home/autostart/radio-player.desktop"
 
 echo "Удалено из $PREFIX. Настройки в $config_home/radio-player остались."

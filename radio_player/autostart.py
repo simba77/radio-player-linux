@@ -7,6 +7,7 @@
 
 from __future__ import annotations
 
+import contextlib
 import shutil
 import site
 import sys
@@ -31,7 +32,9 @@ X-GNOME-Autostart-enabled=true
 
 
 def is_enabled() -> bool:
-    return paths.autostart_file().exists()
+    # Файл под старым именем тоже включает автозапуск: сессия читает каталог
+    # целиком и не знает, как файл назывался в прошлой версии.
+    return paths.autostart_file().exists() or paths.legacy_autostart_file().exists()
 
 
 def set_enabled(enabled: bool) -> bool:
@@ -40,6 +43,7 @@ def set_enabled(enabled: bool) -> bool:
     if not enabled:
         try:
             path.unlink(missing_ok=True)
+            _remove_legacy()
         except OSError:
             return is_enabled()
         return False
@@ -50,9 +54,16 @@ def set_enabled(enabled: bool) -> bool:
             _TEMPLATE.format(name=APP_NAME, exec_line=_exec_line()),
             encoding="utf-8",
         )
+        # Иначе приложение запускалось бы дважды: старый файл никуда не делся.
+        _remove_legacy()
     except OSError:
         return False
     return True
+
+
+def _remove_legacy() -> None:
+    with contextlib.suppress(OSError):
+        paths.legacy_autostart_file().unlink(missing_ok=True)
 
 
 def _exec_line() -> str:

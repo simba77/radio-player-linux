@@ -5,7 +5,7 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-from . import APP_ID
+from . import APP_ID, APP_RDNS_ID
 
 
 def _base(env_var: str, fallback: str) -> Path:
@@ -26,9 +26,23 @@ def cache_dir() -> Path:
 
 def autostart_file() -> Path:
     """`.desktop`-файл автозапуска (аналог SMAppService на macOS)."""
+    return _autostart_dir() / f"{APP_RDNS_ID}.desktop"
+
+
+def legacy_autostart_file() -> Path:
+    """Как файл автозапуска назывался до перехода на reverse-DNS.
+
+    Он остался у тех, кто включил автозапуск в ранних версиях, и продолжает
+    работать сам по себе — поэтому его нужно убирать явно, иначе приложение
+    будет запускаться дважды.
+    """
+    return _autostart_dir() / f"{APP_ID}.desktop"
+
+
+def _autostart_dir() -> Path:
     raw = os.environ.get("XDG_CONFIG_HOME")
     root = Path(raw) if raw else Path.home() / ".config"
-    return root / "autostart" / f"{APP_ID}.desktop"
+    return root / "autostart"
 
 
 def ensure_dirs() -> None:
