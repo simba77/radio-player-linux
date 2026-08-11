@@ -34,13 +34,14 @@ def write_json(path: Path, data: Any) -> bool:
             handle.flush()
             os.fsync(handle.fileno())
         tmp.replace(path)
-        return True
     except OSError:
         # Уборка сама может не пройти (каталога нет, прав нет) — но обещание
         # функции «вернуть False, а не бросить» важнее удалённого хвоста.
         with contextlib.suppress(OSError):
             tmp.unlink(missing_ok=True)
         return False
+    else:
+        return True
 
 
 def state_path() -> Path:

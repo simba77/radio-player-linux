@@ -38,7 +38,11 @@ _TRACK_ID = "/org/mpris/MediaPlayer2/CurrentTrack"
 
 @ClassInfo({"D-Bus Interface": _ROOT_INTERFACE})
 class _RootAdaptor(QDBusAbstractAdaptor):
-    """Интерфейс `org.mpris.MediaPlayer2`: сведения о приложении."""
+    """Интерфейс `org.mpris.MediaPlayer2`: сведения о приложении.
+
+    Имена методов и свойств заданы спецификацией MPRIS и потому идут в CamelCase:
+    по ним приложение находят на шине, переименовать их нельзя.
+    """
 
     def __init__(self, parent: QObject, on_raise: Callable[[], None], on_quit: Callable[[], None]) -> None:
         super().__init__(parent)
@@ -46,47 +50,50 @@ class _RootAdaptor(QDBusAbstractAdaptor):
         self._on_quit = on_quit
 
     @Slot()
-    def Raise(self) -> None:  # noqa: N802 — имя из спецификации D-Bus
+    def Raise(self) -> None:
         self._on_raise()
 
     @Slot()
-    def Quit(self) -> None:  # noqa: N802
+    def Quit(self) -> None:
         self._on_quit()
 
     @Property(bool)
-    def CanQuit(self) -> bool:  # noqa: N802
+    def CanQuit(self) -> bool:
         return True
 
     @Property(bool)
-    def CanRaise(self) -> bool:  # noqa: N802
+    def CanRaise(self) -> bool:
         return True
 
     @Property(bool)
-    def HasTrackList(self) -> bool:  # noqa: N802
+    def HasTrackList(self) -> bool:
         return False
 
     @Property(str)
-    def Identity(self) -> str:  # noqa: N802
+    def Identity(self) -> str:
         return APP_NAME
 
     @Property(str)
-    def DesktopEntry(self) -> str:  # noqa: N802
+    def DesktopEntry(self) -> str:
         """Имя `.desktop`-файла без расширения: по нему оболочка находит
         иконку и название приложения для апплета «Медиаплеер»."""
         return APP_RDNS_ID
 
     @Property("QStringList")
-    def SupportedUriSchemes(self) -> list[str]:  # noqa: N802
+    def SupportedUriSchemes(self) -> list[str]:
         return ["http", "https"]
 
     @Property("QStringList")
-    def SupportedMimeTypes(self) -> list[str]:  # noqa: N802
+    def SupportedMimeTypes(self) -> list[str]:
         return ["audio/mpeg", "audio/aac", "application/vnd.apple.mpegurl"]
 
 
 @ClassInfo({"D-Bus Interface": _PLAYER_INTERFACE})
 class _PlayerAdaptor(QDBusAbstractAdaptor):
-    """Интерфейс `org.mpris.MediaPlayer2.Player`: воспроизведение и метаданные."""
+    """Интерфейс `org.mpris.MediaPlayer2.Player`: воспроизведение и метаданные.
+
+    Имена — из спецификации, см. `_RootAdaptor`.
+    """
 
     def __init__(self, parent: QObject, player: PlayerManager) -> None:
         super().__init__(parent)
@@ -95,53 +102,53 @@ class _PlayerAdaptor(QDBusAbstractAdaptor):
     # MARK: - Методы
 
     @Slot()
-    def Play(self) -> None:  # noqa: N802
+    def Play(self) -> None:
         if not self._player.is_active:
             self._player.toggle()
 
     @Slot()
-    def Pause(self) -> None:  # noqa: N802
+    def Pause(self) -> None:
         # Живой поток не ставится на паузу — останавливаем.
         self._player.stop()
 
     @Slot()
-    def PlayPause(self) -> None:  # noqa: N802
+    def PlayPause(self) -> None:
         self._player.toggle()
 
     @Slot()
-    def Stop(self) -> None:  # noqa: N802
+    def Stop(self) -> None:
         self._player.stop()
 
     @Slot()
-    def Next(self) -> None:  # noqa: N802
+    def Next(self) -> None:
         self._player.play_next()
 
     @Slot()
-    def Previous(self) -> None:  # noqa: N802
+    def Previous(self) -> None:
         self._player.play_previous()
 
     @Slot(float)
-    def Seek(self, _offset: float) -> None:  # noqa: N802
+    def Seek(self, _offset: float) -> None:
         pass  # Живое радио не перематывается.
 
     @Slot(QDBusObjectPath, float)
-    def SetPosition(self, _track: QDBusObjectPath, _position: float) -> None:  # noqa: N802
+    def SetPosition(self, _track: QDBusObjectPath, _position: float) -> None:
         pass
 
     @Slot(str)
-    def OpenUri(self, _uri: str) -> None:  # noqa: N802
+    def OpenUri(self, _uri: str) -> None:
         pass
 
     # MARK: - Свойства
 
     @Property(str)
-    def PlaybackStatus(self) -> str:  # noqa: N802
+    def PlaybackStatus(self) -> str:
         # Буферизация и переподключение — тоже «Playing»: для клиента важно
         # намерение, иначе апплет мигал бы «Stopped» на каждой заминке потока.
         return "Playing" if self._player.is_active else "Stopped"
 
     @Property("QVariantMap")
-    def Metadata(self) -> dict:  # noqa: N802
+    def Metadata(self) -> dict:
         return _metadata(self._player)
 
     def _get_volume(self) -> float:
@@ -153,43 +160,43 @@ class _PlayerAdaptor(QDBusAbstractAdaptor):
     Volume = Property(float, _get_volume, _set_volume)
 
     @Property("qlonglong")
-    def Position(self) -> int:  # noqa: N802
+    def Position(self) -> int:
         return 0
 
     @Property(float)
-    def Rate(self) -> float:  # noqa: N802
+    def Rate(self) -> float:
         return 1.0
 
     @Property(float)
-    def MinimumRate(self) -> float:  # noqa: N802
+    def MinimumRate(self) -> float:
         return 1.0
 
     @Property(float)
-    def MaximumRate(self) -> float:  # noqa: N802
+    def MaximumRate(self) -> float:
         return 1.0
 
     @Property(bool)
-    def CanGoNext(self) -> bool:  # noqa: N802
+    def CanGoNext(self) -> bool:
         return len(self._player.stations) > 1
 
     @Property(bool)
-    def CanGoPrevious(self) -> bool:  # noqa: N802
+    def CanGoPrevious(self) -> bool:
         return len(self._player.stations) > 1
 
     @Property(bool)
-    def CanPlay(self) -> bool:  # noqa: N802
+    def CanPlay(self) -> bool:
         return bool(self._player.stations)
 
     @Property(bool)
-    def CanPause(self) -> bool:  # noqa: N802
+    def CanPause(self) -> bool:
         return True
 
     @Property(bool)
-    def CanSeek(self) -> bool:  # noqa: N802
+    def CanSeek(self) -> bool:
         return False
 
     @Property(bool)
-    def CanControl(self) -> bool:  # noqa: N802
+    def CanControl(self) -> bool:
         return True
 
 

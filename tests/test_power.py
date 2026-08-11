@@ -11,9 +11,9 @@ import pytest
 
 pytest.importorskip("PySide6.QtDBus")
 
-from PySide6.QtCore import QObject, Signal  # noqa: E402
+from PySide6.QtCore import QObject, Signal
 
-from radio_player.power import SleepInhibitor  # noqa: E402
+from radio_player.power import SleepInhibitor
 
 pytestmark = pytest.mark.usefixtures("qt_app")
 

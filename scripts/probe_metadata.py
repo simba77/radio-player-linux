@@ -68,7 +68,7 @@ def main() -> int:
     try:
         player.wait_for_property("core-idle", lambda v: v is False, timeout=20)
         print(f"{stamp()} воспроизведение началось")
-    except Exception as exc:  # noqa: BLE001 — диагностический скрипт, важен сам факт
+    except Exception as exc:
         print(f"{stamp()} не дождались старта: {exc!r}")
 
     try:

@@ -11,11 +11,11 @@ import pytest
 
 pytest.importorskip("PySide6.QtDBus")
 
-from PySide6.QtCore import QObject  # noqa: E402
-from PySide6.QtGui import QImage  # noqa: E402
+from PySide6.QtCore import QObject
+from PySide6.QtGui import QImage
 
-from radio_player import mpris  # noqa: E402
-from radio_player.models import Station, TrackInfo  # noqa: E402
+from radio_player import mpris
+from radio_player.models import Station, TrackInfo
 
 pytestmark = pytest.mark.usefixtures("qt_app")
 

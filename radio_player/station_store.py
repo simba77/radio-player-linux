@@ -37,11 +37,11 @@ class StationStore(QObject):
     @property
     def hidden_stations(self) -> list[Station]:
         """Скрытые станции каталогов — нужны экрану настроек, чтобы их вернуть."""
-        hidden = []
-        for station in self._catalog_stations():
-            if station.id in self._overlay.hidden:
-                hidden.append(self._apply_override(station))
-        return hidden
+        return [
+            self._apply_override(station)
+            for station in self._catalog_stations()
+            if station.id in self._overlay.hidden
+        ]
 
     def find(self, station_id: str) -> Station | None:
         for station in self._stations:

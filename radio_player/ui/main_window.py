@@ -178,7 +178,7 @@ class MainWindow(QWidget):
     def _quit(self) -> None:
         QApplication.quit()
 
-    def closeEvent(self, event: QCloseEvent) -> None:  # noqa: N802 — Qt API
+    def closeEvent(self, event: QCloseEvent) -> None:  # имя переопределяемого метода Qt
         if self._closable or not self._settings.close_to_tray:
             event.accept()
             QApplication.quit()

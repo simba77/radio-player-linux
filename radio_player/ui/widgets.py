@@ -35,7 +35,7 @@ class ClickableLabel(QLabel):
 
     clicked = Signal()
 
-    def mousePressEvent(self, event) -> None:  # noqa: N802 — Qt API
+    def mousePressEvent(self, event) -> None:  # имя переопределяемого метода Qt
         if event.button() == Qt.MouseButton.LeftButton:
             self.clicked.emit()
         super().mousePressEvent(event)

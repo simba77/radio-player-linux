@@ -120,7 +120,7 @@ def test_playback_is_confirmed_by_mpv(player, mpv):
     assert player.state is PlaybackState.PLAYING
 
 
-def test_loading_is_not_reported_as_playing(player, mpv):
+def test_loading_is_not_reported_as_playing(player):
     """Пока mpv не подтвердил звук, «играет» — неправда.
 
     Наблюдаемое состояние важнее оптимистичного флага: на нём держится и
@@ -164,7 +164,7 @@ def test_stop_leaves_nothing_running(player, mpv):
     assert player._stall_timer.isActive() is False
 
 
-def test_last_station_is_remembered(player, mpv):
+def test_last_station_is_remembered(player):
     player.play(SECOND)
     assert storage.load_state()["last_station_id"] == SECOND.id
 
@@ -301,7 +301,7 @@ def test_network_return_retries_immediately(player, mpv):
     assert mpv.played == [FIRST.url, FIRST.url]
 
 
-def test_network_events_are_ignored_when_not_playing(player, mpv):
+def test_network_events_are_ignored_when_not_playing(player):
     player.on_network_reachable(False)
     assert player.is_reconnecting is False
 
@@ -318,7 +318,7 @@ def test_next_and_previous_wrap_around(player, mpv):
     assert player.current_station == SECOND
 
 
-def test_toggle_starts_the_first_station_when_nothing_was_chosen(player, mpv):
+def test_toggle_starts_the_first_station_when_nothing_was_chosen(player):
     player.toggle()
     assert player.current_station == FIRST
 
@@ -341,13 +341,13 @@ def test_volume_is_clamped_and_reaches_mpv(player, mpv):
     assert player.volume == 0
 
 
-def test_volume_reaches_the_disk_after_the_pause(player, mpv):
+def test_volume_reaches_the_disk_after_the_pause(player):
     player.set_volume(42)
     player._volume_save_timer.timeout.emit()
     assert storage.load_state()["volume"] == 42
 
 
-def test_dragging_the_slider_writes_once(player, mpv, monkeypatch):
+def test_dragging_the_slider_writes_once(player, monkeypatch):
     """Слайдер шлёт значение на каждый пиксель, а запись идёт с fsync
     в потоке отрисовки — за одно перетаскивание это десятки обращений к диску."""
     writes = []
@@ -361,7 +361,7 @@ def test_dragging_the_slider_writes_once(player, mpv, monkeypatch):
     assert writes == [{"volume": 59}]
 
 
-def test_volume_is_saved_on_shutdown(player, mpv):
+def test_volume_is_saved_on_shutdown(player):
     """Между последним движением слайдера и выходом пауза не успевает истечь."""
     player.set_volume(42)
     player.shutdown()

@@ -82,6 +82,8 @@ class ArtworkLoader(QObject):
         self.artwork_ready.emit(url, str(path), image)
 
     def _cache_path(self, url: str) -> Path:
-        digest = hashlib.sha1(url.encode()).hexdigest()
+        # Хеш здесь — способ превратить адрес в имя файла, а не защита:
+        # подделывать его некому, коллизия стоит одной перерисованной обложки.
+        digest = hashlib.sha1(url.encode(), usedforsecurity=False).hexdigest()
         suffix = ".webp" if url.split("?", 1)[0].endswith(".webp") else ".jpg"
         return self._dir / f"{digest}{suffix}"

@@ -16,9 +16,9 @@ import pytest
 
 pytest.importorskip("PySide6.QtCore")
 
-from PySide6.QtCore import QCoreApplication, QTranslator  # noqa: E402
+from PySide6.QtCore import QCoreApplication, QTranslator
 
-from radio_player import i18n  # noqa: E402
+from radio_player import i18n
 
 ROOT = Path(__file__).resolve().parent.parent
 SOURCES = sorted((ROOT / "radio_player").rglob("*.py"))
@@ -107,12 +107,12 @@ class _Collector(ast.NodeVisitor):
         self.visit(tree)
         return self.found
 
-    def visit_ClassDef(self, node: ast.ClassDef) -> None:  # noqa: N802 — ast API
+    def visit_ClassDef(self, node: ast.ClassDef) -> None:
         self.classes.append(node.name)
         self.generic_visit(node)
         self.classes.pop()
 
-    def visit_Call(self, node: ast.Call) -> None:  # noqa: N802 — ast API
+    def visit_Call(self, node: ast.Call) -> None:
         function = node.func
         if isinstance(function, ast.Attribute) and node.args:
             first = node.args[0]
