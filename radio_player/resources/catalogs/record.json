@@ -1,0 +1,38 @@
+{
+  "schema": 1,
+  "id": "record",
+  "name": "Radio Record",
+  "revision": 1,
+  "stations": [
+    {
+      "id": "record-ladywaks",
+      "name": "Radio Record — Lady Waks",
+      "url": "https://hls-01-radiorecord.hostingradio.ru/record-ladywaks/playlist.m3u8"
+    },
+    {
+      "id": "record-main",
+      "name": "Radio Record — Main",
+      "url": "https://hls-01-radiorecord.hostingradio.ru/record/playlist.m3u8"
+    },
+    {
+      "id": "record-ps",
+      "name": "Radio Record — Pirat Station",
+      "url": "https://hls-01-radiorecord.hostingradio.ru/record-ps/playlist.m3u8"
+    },
+    {
+      "id": "record-brks",
+      "name": "Radio Record — Breaks",
+      "url": "https://hls-01-radiorecord.hostingradio.ru/record-brks/playlist.m3u8"
+    },
+    {
+      "id": "record-dc",
+      "name": "Radio Record — Dancecore",
+      "url": "https://hls-01-radiorecord.hostingradio.ru/record-dc/playlist.m3u8"
+    },
+    {
+      "id": "record-mix",
+      "name": "Radio Record — Megamix",
+      "url": "https://hls-01-radiorecord.hostingradio.ru/record-mix/playlist.m3u8"
+    }
+  ]
+}

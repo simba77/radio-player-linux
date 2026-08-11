@@ -1,0 +1,17 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=Radio Player
+Name[ru]=Radio Player
+GenericName=Internet radio player
+GenericName[ru]=Плеер интернет-радио
+Comment=Listen to internet radio stations
+Comment[ru]=Прослушивание интернет-радио
+Exec=radio-player
+Icon=audio-radio
+Terminal=false
+Categories=AudioVideo;Audio;Player;
+Keywords=radio;stream;music;
+Keywords[ru]=радио;поток;музыка;
+StartupNotify=false
+SingleMainWindow=true

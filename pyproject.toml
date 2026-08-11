@@ -1,0 +1,32 @@
+[project]
+name = "radio-player"
+version = "0.1.0"
+description = "Минималистичный плеер интернет-радио для Linux"
+requires-python = ">=3.12"
+dependencies = [
+    "PySide6>=6.6",
+    "python-mpv>=1.0",
+]
+
+[project.scripts]
+radio-player = "radio_player.__main__:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["radio_player*"]
+
+[tool.setuptools.package-data]
+radio_player = ["resources/**/*"]
+
+[tool.ruff]
+line-length = 110
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
