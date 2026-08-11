@@ -53,12 +53,18 @@ def install(app: QCoreApplication, language: str) -> str:
     resolved = resolve(language)
     # Отсюда берётся и формат чисел с датами, а не только язык сообщений.
     QLocale.setDefault(QLocale(resolved))
-    if resolved == "en":
-        return resolved
 
-    # Свои стандартные кнопки и файловый диалог Qt переводит сам — без этого
-    # «Открыть» и «Отмена» остались бы английскими посреди русского интерфейса.
-    _load(app, f"qtbase_{resolved}", QLibraryInfo.path(QLibraryInfo.LibraryPath.TranslationsPath))
+    if resolved != "en":
+        # Свои стандартные кнопки и файловый диалог Qt переводит сам — без этого
+        # «Открыть» и «Отмена» остались бы английскими посреди русского интерфейса.
+        _load(
+            app,
+            f"qtbase_{resolved}",
+            QLibraryInfo.path(QLibraryInfo.LibraryPath.TranslationsPath),
+        )
+
+    # Английский тоже переводится: в коде формы числа записаны как «%n day(s)»,
+    # показывать это пользователю нельзя.
     _load(app, f"radio_player_{resolved}", str(_TRANSLATIONS_DIR))
     return resolved
 

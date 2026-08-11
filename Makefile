@@ -13,7 +13,7 @@ PREFIX ?= $(HOME)/.local
 # Утилиты Qt лежат вне PATH (/usr/lib/qt6/bin), поэтому ищем их явно.
 LRELEASE ?= $(shell command -v lrelease 2>/dev/null || echo /usr/lib/qt6/bin/lrelease)
 LUPDATE ?= $(shell command -v pyside6-lupdate 2>/dev/null || echo /usr/lib/qt6/bin/pyside6-lupdate)
-LANGUAGES := ru
+LANGUAGES := ru en
 
 .PHONY: help run probe deps deps-i18n devenv lint test i18n-update i18n-release install uninstall deb clean
 

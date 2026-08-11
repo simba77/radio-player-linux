@@ -15,10 +15,13 @@ from pathlib import Path
 
 from . import APP_ID, APP_NAME, paths
 
+# Локализованные поля `.desktop` — часть формата, а не строки интерфейса:
+# среда сама выбирает нужный вариант по своей локали.
 _TEMPLATE = """[Desktop Entry]
 Type=Application
 Name={name}
-Comment=Плеер интернет-радио
+Comment=Internet radio player
+Comment[ru]=Плеер интернет-радио
 Exec={exec_line}
 Icon=audio-radio
 Terminal=false

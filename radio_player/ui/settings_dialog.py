@@ -5,10 +5,11 @@ from __future__ import annotations
 from contextlib import contextmanager
 from pathlib import Path
 
-from PySide6.QtCore import Qt, QTimer
+from PySide6.QtCore import QCoreApplication, Qt, QTimer
 from PySide6.QtWidgets import (
     QAbstractItemView,
     QCheckBox,
+    QComboBox,
     QDialog,
     QFileDialog,
     QFormLayout,
@@ -26,13 +27,16 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from .. import autostart, catalog, playlist_io
+from .. import autostart, catalog, i18n, playlist_io
 from .. import settings as settings_module
 from ..settings import MAX_UPDATE_INTERVAL_HOURS, MIN_UPDATE_INTERVAL_HOURS, Settings
 from ..station_store import StationStore
 
 #: Роль Qt для хранения id станции в строке списка.
 _STATION_ID_ROLE = int(Qt.ItemDataRole.UserRole)
+
+#: Названия языков не переводятся: каждый пишется на себе самом.
+_LANGUAGE_NAMES = {"en": "English", "ru": "Русский"}
 
 
 class SettingsDialog(QDialog):
@@ -48,13 +52,13 @@ class SettingsDialog(QDialog):
         self._settings = settings
         self._updater = updater
 
-        self.setWindowTitle("Настройки")
+        self.setWindowTitle(self.tr("Settings"))
         self.resize(460, 460)
 
         tabs = QTabWidget()
-        tabs.addTab(GeneralTab(settings), "Основные")
-        tabs.addTab(StationsTab(store), "Станции")
-        tabs.addTab(CatalogsTab(settings, updater), "Каталоги")
+        tabs.addTab(GeneralTab(settings), self.tr("General"))
+        tabs.addTab(StationsTab(store), self.tr("Stations"))
+        tabs.addTab(CatalogsTab(settings, updater), self.tr("Catalogs"))
 
         layout = QVBoxLayout(self)
         layout.addWidget(tabs)
@@ -65,24 +69,37 @@ class GeneralTab(QWidget):
         super().__init__(parent)
         self._settings = settings
 
-        self._autostart = QCheckBox("Запускать при входе в систему")
+        self._autostart = QCheckBox(self.tr("Start at login"))
         self._autostart.setChecked(autostart.is_enabled())
         self._autostart.toggled.connect(self._on_autostart_toggled)
 
-        self._close_to_tray = QCheckBox("Закрытие окна сворачивает в трей")
+        self._close_to_tray = QCheckBox(self.tr("Closing the window hides it in the tray"))
         self._close_to_tray.setChecked(settings.close_to_tray)
         self._close_to_tray.toggled.connect(self._on_close_to_tray_toggled)
 
         self._interval = QSpinBox()
         self._interval.setRange(MIN_UPDATE_INTERVAL_HOURS, MAX_UPDATE_INTERVAL_HOURS)
         self._interval.setValue(settings.update_interval_hours)
-        self._interval.setSuffix(" ч")
+        self._interval.setSuffix(self.tr(" h"))
         self._interval.valueChanged.connect(self._on_interval_changed)
+
+        self._language = QComboBox()
+        self._language.addItem(self.tr("System"), i18n.AUTO)
+        for code in i18n.LANGUAGES:
+            self._language.addItem(_LANGUAGE_NAMES[code], code)
+        self._language.setCurrentIndex(max(0, self._language.findData(settings.language)))
+        self._language.currentIndexChanged.connect(self._on_language_changed)
+
+        self._language_hint = QLabel(self.tr("The language will change after a restart."))
+        self._language_hint.setWordWrap(True)
+        self._language_hint.hide()
 
         form = QFormLayout()
         form.addRow(self._autostart)
         form.addRow(self._close_to_tray)
-        form.addRow("Обновлять каталоги каждые", self._interval)
+        form.addRow(self.tr("Update catalogs every"), self._interval)
+        form.addRow(self.tr("Interface language"), self._language)
+        form.addRow("", self._language_hint)
 
         layout = QVBoxLayout(self)
         layout.addLayout(form)
@@ -96,7 +113,9 @@ class GeneralTab(QWidget):
         self._autostart.blockSignals(True)
         self._autostart.setChecked(actual)
         self._autostart.blockSignals(False)
-        QMessageBox.warning(self, "Автозапуск", "Не удалось изменить настройку автозапуска.")
+        QMessageBox.warning(
+            self, self.tr("Start at login"), self.tr("Could not change the startup setting.")
+        )
 
     def _on_close_to_tray_toggled(self, enabled: bool) -> None:
         self._settings.close_to_tray = enabled
@@ -105,6 +124,12 @@ class GeneralTab(QWidget):
     def _on_interval_changed(self, hours: int) -> None:
         self._settings.update_interval_hours = hours
         settings_module.save(self._settings)
+
+    def _on_language_changed(self) -> None:
+        self._settings.language = self._language.currentData()
+        settings_module.save(self._settings)
+        # Перерисовать уже собранный интерфейс нечем — предупреждаем честно.
+        self._language_hint.show()
 
 
 class StationsTab(QWidget):
@@ -122,21 +147,21 @@ class StationsTab(QWidget):
         self._list.itemChanged.connect(self._on_item_changed)
         self._list.itemSelectionChanged.connect(self._update_buttons)
 
-        self._add_button = QPushButton("Добавить...")
+        self._add_button = QPushButton(self.tr("Add..."))
         self._add_button.clicked.connect(self._add_station)
-        self._duplicate_button = QPushButton("Сделать копию")
+        self._duplicate_button = QPushButton(self.tr("Duplicate"))
         self._duplicate_button.setToolTip(
-            "Создаёт вашу копию станции каталога — у копии можно менять адрес потока"
+            self.tr("Creates your own copy of a catalog station — its stream URL can be edited")
         )
         self._duplicate_button.clicked.connect(self._duplicate_station)
-        self._remove_button = QPushButton("Удалить")
+        self._remove_button = QPushButton(self.tr("Remove"))
         self._remove_button.clicked.connect(self._remove_station)
-        self._import_button = QPushButton("Импорт...")
+        self._import_button = QPushButton(self.tr("Import..."))
         self._import_button.clicked.connect(self._import_stations)
-        self._export_button = QPushButton("Экспорт...")
+        self._export_button = QPushButton(self.tr("Export..."))
         self._export_button.clicked.connect(self._export_stations)
-        self._reset_button = QPushButton("Сбросить")
-        self._reset_button.setToolTip("Вернуть список к состоянию каталогов")
+        self._reset_button = QPushButton(self.tr("Reset"))
+        self._reset_button.setToolTip(self.tr("Return the list to the catalog state"))
         self._reset_button.clicked.connect(self._reset)
 
         buttons = QHBoxLayout()
@@ -148,8 +173,10 @@ class StationsTab(QWidget):
         buttons.addWidget(self._export_button)
 
         hint = QLabel(
-            "Снимите галочку, чтобы скрыть станцию. Название можно изменить двойным щелчком, "
-            "порядок — перетаскиванием."
+            self.tr(
+                "Uncheck a station to hide it. Rename with a double click, "
+                "reorder by dragging."
+            )
         )
         hint.setWordWrap(True)
 
@@ -236,14 +263,17 @@ class StationsTab(QWidget):
         QTimer.singleShot(0, self._reload)
 
     def _add_station(self) -> None:
-        name, ok = QInputDialog.getText(self, "Новая станция", "Название:")
+        title = self.tr("New station")
+        name, ok = QInputDialog.getText(self, title, self.tr("Name:"))
         if not ok or not name.strip():
             return
-        url, ok = QInputDialog.getText(self, "Новая станция", "Адрес потока:", QLineEdit.EchoMode.Normal, "https://")
+        url, ok = QInputDialog.getText(
+            self, title, self.tr("Stream URL:"), QLineEdit.EchoMode.Normal, "https://"
+        )
         if not ok:
             return
         if self._store.add_custom(name, url) is None:
-            QMessageBox.warning(self, "Новая станция", "Нужны название и адрес потока.")
+            QMessageBox.warning(self, title, self.tr("A name and a stream URL are required."))
 
     def _duplicate_station(self) -> None:
         station_id = self._selected_id()
@@ -255,36 +285,57 @@ class StationsTab(QWidget):
         station = self._store.find(station_id) if station_id else None
         if station is None:
             return
-        confirm = QMessageBox.question(self, "Удаление", f"Удалить станцию «{station.name}»?")
+        confirm = QMessageBox.question(
+            self,
+            self.tr("Remove"),
+            self.tr("Remove the station «{name}»?").format(name=station.name),
+        )
         if confirm == QMessageBox.StandardButton.Yes:
             self._store.remove_custom(station.id)
 
     def _import_stations(self) -> None:
         path, _ = QFileDialog.getOpenFileName(
-            self, "Импорт станций", "", "Плейлисты (*.m3u *.m3u8 *.pls *.json);;Все файлы (*)"
+            self,
+            self.tr("Import stations"),
+            "",
+            self.tr("Playlists (*.m3u *.m3u8 *.pls *.json);;All files (*)"),
         )
         if not path:
             return
         stations = playlist_io.read_file(Path(path))
         if not stations:
-            QMessageBox.warning(self, "Импорт", "В файле не нашлось станций.")
+            QMessageBox.warning(
+                self, self.tr("Import"), self.tr("No stations were found in the file.")
+            )
             return
         for station in stations:
             self._store.add_custom(station.name, station.url)
-        QMessageBox.information(self, "Импорт", f"Добавлено станций: {len(stations)}.")
+        QMessageBox.information(
+            self,
+            self.tr("Import"),
+            self.tr("%n station(s) added.", "", len(stations)),
+        )
 
     def _export_stations(self) -> None:
-        path, _ = QFileDialog.getSaveFileName(self, "Экспорт станций", "stations.m3u", "Плейлист (*.m3u)")
+        path, _ = QFileDialog.getSaveFileName(
+            self, self.tr("Export stations"), "stations.m3u", self.tr("Playlist (*.m3u)")
+        )
         if not path:
             return
         try:
             Path(path).write_text(playlist_io.export_m3u(self._store.stations), encoding="utf-8")
         except OSError as exc:
-            QMessageBox.warning(self, "Экспорт", f"Не удалось сохранить файл: {exc}")
+            QMessageBox.warning(
+                self,
+                self.tr("Export"),
+                self.tr("Could not save the file: {error}").format(error=exc),
+            )
 
     def _reset(self) -> None:
         confirm = QMessageBox.question(
-            self, "Сброс", "Вернуть список станций к состоянию каталогов? Ваши правки будут потеряны."
+            self,
+            self.tr("Reset"),
+            self.tr("Return the station list to the catalog state? Your edits will be lost."),
         )
         if confirm == QMessageBox.StandardButton.Yes:
             self._store.reset()
@@ -311,11 +362,11 @@ class CatalogsTab(QWidget):
         self._status = QLabel()
         self._status.setWordWrap(True)
 
-        self._add_button = QPushButton("Добавить каталог...")
+        self._add_button = QPushButton(self.tr("Add catalog..."))
         self._add_button.clicked.connect(self._add_catalog)
-        self._remove_button = QPushButton("Удалить")
+        self._remove_button = QPushButton(self.tr("Remove"))
         self._remove_button.clicked.connect(self._remove_catalog)
-        self._update_button = QPushButton("Обновить сейчас")
+        self._update_button = QPushButton(self.tr("Update now"))
         self._update_button.clicked.connect(self._update_now)
 
         buttons = QHBoxLayout()
@@ -337,7 +388,7 @@ class CatalogsTab(QWidget):
         self._list.clear()
         for url in catalog.DEFAULT_CATALOG_URLS:
             item = QListWidgetItem(url)
-            item.setToolTip(f"{url}\n\nВстроенный каталог — удалить нельзя")
+            item.setToolTip(f"{url}\n\n" + self.tr("Built-in catalog — cannot be removed"))
             item.setFlags(Qt.ItemFlag.ItemIsEnabled)
             self._list.addItem(item)
         for url in self._settings.extra_catalog_urls:
@@ -355,23 +406,28 @@ class CatalogsTab(QWidget):
 
     def _update_status(self) -> None:
         if self._updater.is_running:
-            self._status.setText("Обновление...")
+            self._status.setText(self.tr("Updating..."))
             return
         elapsed = catalog.seconds_since_update()
         if elapsed is None:
-            self._status.setText("Каталоги ещё не обновлялись.")
+            self._status.setText(self.tr("The catalogs have never been updated."))
         else:
-            self._status.setText(f"Последнее обновление: {_humanize(elapsed)} назад.")
+            self._status.setText(
+                self.tr("Last update: {ago} ago.").format(ago=_humanize(elapsed))
+            )
 
     def _add_catalog(self) -> None:
+        title = self.tr("New catalog")
         url, ok = QInputDialog.getText(
-            self, "Новый каталог", "Ссылка на JSON-каталог:", QLineEdit.EchoMode.Normal, "https://"
+            self, title, self.tr("Link to a JSON catalog:"), QLineEdit.EchoMode.Normal, "https://"
         )
         url = url.strip()
         if not ok or not url:
             return
         if not url.startswith(("http://", "https://")):
-            QMessageBox.warning(self, "Новый каталог", "Ссылка должна начинаться с http:// или https://")
+            QMessageBox.warning(
+                self, title, self.tr("The link must start with http:// or https://")
+            )
             return
         if url in self._settings.extra_catalog_urls or url in catalog.DEFAULT_CATALOG_URLS:
             return
@@ -396,16 +452,21 @@ class CatalogsTab(QWidget):
         self._update_status()
         self._update_buttons()
         if not changed:
-            self._status.setText(self._status.text() + " Изменений нет.")
+            self._status.setText(self._status.text() + " " + self.tr("No changes."))
 
 
 def _humanize(seconds: float) -> str:
+    """Прошедшее время словами. Формы числа расставляет Qt по правилам языка.
+
+    Литералы стоят прямо в вызовах `translate()`: строки собираются статически,
+    и обёртку вокруг вызова lupdate уже не разберёт.
+    """
     minutes = int(seconds // 60)
     if minutes < 1:
-        return "меньше минуты"
+        return QCoreApplication.translate("CatalogsTab", "less than a minute")
     if minutes < 60:
-        return f"{minutes} мин"
+        return QCoreApplication.translate("CatalogsTab", "%n minute(s)", None, minutes)
     hours = minutes // 60
     if hours < 24:
-        return f"{hours} ч"
-    return f"{hours // 24} дн"
+        return QCoreApplication.translate("CatalogsTab", "%n hour(s)", None, hours)
+    return QCoreApplication.translate("CatalogsTab", "%n day(s)", None, hours // 24)

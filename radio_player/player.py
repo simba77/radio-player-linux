@@ -15,7 +15,7 @@ import locale
 from typing import Protocol
 
 import mpv
-from PySide6.QtCore import QObject, QTimer, Signal, Slot
+from PySide6.QtCore import QCoreApplication, QObject, QTimer, Signal, Slot
 from PySide6.QtGui import QImage
 
 from . import storage
@@ -176,7 +176,8 @@ class PlayerManager(QObject):
         try:
             self._mpv.play(station.url)
         except (OSError, RuntimeError) as exc:
-            self._fail(f"Не удалось открыть поток: {exc}")
+            message = QCoreApplication.translate("PlayerManager", "Could not open the stream: {error}")
+            self._fail(message.format(error=exc))
             return
 
         self.is_loading = True

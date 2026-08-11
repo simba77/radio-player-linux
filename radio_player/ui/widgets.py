@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from PySide6.QtCore import Qt, QTimer, Signal
+from PySide6.QtCore import QCoreApplication, Qt, QTimer, Signal
 from PySide6.QtGui import (
     QGuiApplication,
     QImage,
@@ -55,7 +55,7 @@ class NowPlayingWidget(QWidget):
         self._title.setTextFormat(Qt.TextFormat.PlainText)
         self._title.setStyleSheet("font-weight: 600;")
         self._title.setCursor(Qt.CursorShape.PointingHandCursor)
-        self._title.setToolTip("Нажмите, чтобы скопировать название")
+        self._title.setToolTip(self.tr("Click to copy the track name"))
         self._title.clicked.connect(self._copy_track)
 
         self._subtitle = QLabel()
@@ -74,15 +74,17 @@ class NowPlayingWidget(QWidget):
         self._error.setStyleSheet("color: #e05252;")
         self._error.hide()
 
-        self._previous_button = _tool_button(icons.PREVIOUS, "Предыдущая станция", player.play_previous)
-        self._play_button = _tool_button(icons.PLAY, "Воспроизвести", player.toggle)
-        self._next_button = _tool_button(icons.NEXT, "Следующая станция", player.play_next)
+        self._previous_button = _tool_button(
+            icons.PREVIOUS, self.tr("Previous station"), player.play_previous
+        )
+        self._play_button = _tool_button(icons.PLAY, self.tr("Play"), player.toggle)
+        self._next_button = _tool_button(icons.NEXT, self.tr("Next station"), player.play_next)
 
         self._volume = QSlider(Qt.Orientation.Horizontal)
         self._volume.setRange(0, 100)
         self._volume.setValue(player.volume)
         self._volume.setFixedWidth(90)
-        self._volume.setToolTip("Громкость")
+        self._volume.setToolTip(self.tr("Volume"))
         self._volume.valueChanged.connect(player.set_volume)
 
         controls = QHBoxLayout()
@@ -138,7 +140,7 @@ class NowPlayingWidget(QWidget):
 
         stop_state = player.is_playing or player.is_reconnecting
         self._play_button.setIcon(icons.get(icons.STOP if stop_state else icons.PLAY))
-        self._play_button.setToolTip("Остановить" if stop_state else "Воспроизвести")
+        self._play_button.setToolTip(self.tr("Stop") if stop_state else self.tr("Play"))
 
     def _set_artwork(self, image: QImage | None) -> None:
         if image is None or image.isNull():
@@ -151,7 +153,7 @@ class NowPlayingWidget(QWidget):
         if track is None:
             return
         QGuiApplication.clipboard().setText(track.display)
-        self._subtitle.setText("Скопировано")
+        self._subtitle.setText(self.tr("Copied"))
         self._subtitle.show()
         self._copied_timer.start()
 
@@ -222,15 +224,18 @@ def _tool_button(icon_name: str, tooltip: str, slot) -> QPushButton:
 
 
 def _title_text(player: PlayerManager) -> str:
+    # Вне виджета `self.tr()` недоступен, а контекст нужен тот же. Литералы
+    # стоят прямо в вызовах: lupdate собирает строки статически и обёртку
+    # вокруг translate() уже не разберёт.
     if player.is_reconnecting:
-        return "Переподключение..."
+        return QCoreApplication.translate("NowPlayingWidget", "Reconnecting...")
     if player.is_loading:
-        return "Загрузка..."
+        return QCoreApplication.translate("NowPlayingWidget", "Loading...")
     if player.current_track is not None:
         return player.current_track.display
     if player.current_station is not None:
         return player.current_station.name
-    return "Не играет"
+    return QCoreApplication.translate("NowPlayingWidget", "Not playing")
 
 
 def _subtitle_text(player: PlayerManager) -> str:

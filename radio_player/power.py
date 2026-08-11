@@ -15,7 +15,7 @@ gnome-settings-daemon не смотрят на активный плеер. Бе
 
 from __future__ import annotations
 
-from PySide6.QtCore import Q_ARG, QMetaObject, QObject, Slot
+from PySide6.QtCore import Q_ARG, QCoreApplication, QMetaObject, QObject, Slot
 from PySide6.QtDBus import QDBusConnection, QDBusInterface, QDBusMessage, QDBusPendingCallWatcher
 
 from . import APP_NAME
@@ -24,7 +24,6 @@ from .player import PlayerManager
 _SERVICE = "org.freedesktop.PowerManagement"
 _PATH = "/org/freedesktop/PowerManagement/Inhibit"
 _INTERFACE = "org.freedesktop.PowerManagement.Inhibit"
-_REASON = "Воспроизведение радио"
 
 #: Служба локальная, отвечает мгновенно; долго ждать её незачем.
 _CALL_TIMEOUT_MS = 3000
@@ -79,7 +78,9 @@ class SleepInhibitor(QObject):
         interface = self._connect()
         if interface is None:
             return
-        pending = interface.asyncCallWithArgumentList("Inhibit", [APP_NAME, _REASON])
+        # Литерал прямо в вызове: lupdate извлекает строки статически.
+        reason = QCoreApplication.translate("SleepInhibitor", "Radio playback")
+        pending = interface.asyncCallWithArgumentList("Inhibit", [APP_NAME, reason])
         watcher = QDBusPendingCallWatcher(pending, self)
         watcher.finished.connect(self._on_inhibited)
         self._pending = True

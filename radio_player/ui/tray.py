@@ -36,14 +36,14 @@ class TrayIcon(QSystemTrayIcon):
         self.setToolTip(APP_NAME)
 
         menu = QMenu()
-        self._play_action = menu.addAction("Воспроизвести", player.toggle)
-        menu.addAction("Следующая станция", player.play_next)
-        menu.addAction("Предыдущая станция", player.play_previous)
+        self._play_action = menu.addAction(self.tr("Play"), player.toggle)
+        menu.addAction(self.tr("Next station"), player.play_next)
+        menu.addAction(self.tr("Previous station"), player.play_previous)
         menu.addSeparator()
-        menu.addAction("Показать окно", on_toggle_window)
-        menu.addAction("Настройки...", on_settings)
+        menu.addAction(self.tr("Show window"), on_toggle_window)
+        menu.addAction(self.tr("Settings..."), on_settings)
         menu.addSeparator()
-        menu.addAction("Выход", on_quit)
+        menu.addAction(self.tr("Quit"), on_quit)
         self.setContextMenu(menu)
 
         self.activated.connect(self._on_activated)
@@ -59,7 +59,7 @@ class TrayIcon(QSystemTrayIcon):
     def _refresh(self) -> None:
         playing = self._player.is_playing and not self._player.is_reconnecting
         self._set_icon(playing)
-        self._play_action.setText("Остановить" if self._player.is_playing else "Воспроизвести")
+        self._play_action.setText(self.tr("Stop") if self._player.is_playing else self.tr("Play"))
         self.setToolTip(self._tooltip())
 
     def _on_blink(self, on: bool) -> None:
@@ -72,7 +72,7 @@ class TrayIcon(QSystemTrayIcon):
     def _tooltip(self) -> str:
         player = self._player
         if player.is_reconnecting:
-            return f"{APP_NAME} — переподключение..."
+            return self.tr("{app} — reconnecting...").format(app=APP_NAME)
         if player.current_track is not None:
             return player.current_track.display
         if player.current_station is not None and player.is_playing:
