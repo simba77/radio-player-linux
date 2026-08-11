@@ -138,7 +138,7 @@ class NowPlayingWidget(QWidget):
         self._error.setText(player.error_message or "")
         self._error.setVisible(bool(player.error_message))
 
-        stop_state = player.is_playing or player.is_reconnecting
+        stop_state = player.is_active
         self._play_button.setIcon(icons.get(icons.STOP if stop_state else icons.PLAY))
         self._play_button.setToolTip(self.tr("Stop") if stop_state else self.tr("Play"))
 

@@ -14,7 +14,7 @@ import pytest
 
 from radio_player import storage
 from radio_player.models import Station
-from radio_player.player import PlayerManager
+from radio_player.player import PlaybackState, PlayerManager
 
 pytestmark = pytest.mark.usefixtures("qt_app")
 
@@ -114,11 +114,22 @@ def test_play_opens_the_stream(player, mpv):
 
 def test_playback_is_confirmed_by_mpv(player, mpv):
     player.play(FIRST)
-    assert player.is_loading is True
+    assert player.state is PlaybackState.LOADING
 
     mpv.emit("core-idle", False)
-    assert player.is_loading is False
-    assert player.is_playing is True
+    assert player.state is PlaybackState.PLAYING
+
+
+def test_loading_is_not_reported_as_playing(player, mpv):
+    """Пока mpv не подтвердил звук, «играет» — неправда.
+
+    Наблюдаемое состояние важнее оптимистичного флага: на нём держится и
+    иконка в трее, и `PlaybackStatus` в MPRIS.
+    """
+    player.play(FIRST)
+    assert player.is_playing is False
+    # Но намерение уже есть: кнопка показывает «стоп», система не спит.
+    assert player.is_active is True
 
 
 def test_failure_to_open_reports_an_error(player, mpv):
@@ -127,16 +138,27 @@ def test_failure_to_open_reports_an_error(player, mpv):
     player.error_occurred.connect(errors.append)
 
     player.play(FIRST)
-    assert player.is_playing is False
-    assert player.is_loading is False
+    assert player.state is PlaybackState.FAILED
+    assert player.error_message in errors
     assert len(errors) == 1
+
+
+def test_a_new_attempt_clears_the_previous_error(player, mpv):
+    mpv.fail_on_play = True
+    player.play(FIRST)
+    mpv.fail_on_play = False
+
+    player.play(FIRST)
+    assert player.error_message is None
+    assert player.state is PlaybackState.LOADING
 
 
 def test_stop_leaves_nothing_running(player, mpv):
     start_playing(player, mpv)
     player.stop()
 
-    assert player.is_playing is False
+    assert player.state is PlaybackState.IDLE
+    assert player.is_active is False
     assert ("stop",) in mpv.commands
     assert player._reconnect_timer.isActive() is False
     assert player._stall_timer.isActive() is False
@@ -153,7 +175,7 @@ def test_last_station_is_restored_on_startup(mpv):
     try:
         assert restored.current_station == SECOND
         # Восстановление — не воспроизведение: станция выбрана, поток молчит.
-        assert restored.is_playing is False
+        assert restored.state is PlaybackState.IDLE
         assert mpv.played == []
     finally:
         restored.shutdown()
@@ -209,6 +231,27 @@ def test_successful_reconnect_clears_the_indication(player, mpv):
     assert player.is_playing is True
     assert player._blink_timer.isActive() is False
     assert player.blink_on is False
+
+
+def test_reconnecting_still_counts_as_active(player, mpv):
+    """Пауза между попытками — не остановка: система не должна засыпать,
+    а кнопка обязана оставаться «стоп»."""
+    start_playing(player, mpv)
+    mpv.end_file(ERROR)
+
+    assert player.is_active is True
+    assert player.is_playing is False
+
+
+def test_failed_attempt_during_reconnect_keeps_reconnecting(player, mpv):
+    """Неудачная попытка — часть цикла, а не отдельное событие для пользователя."""
+    start_playing(player, mpv)
+    mpv.end_file(ERROR)
+    mpv.fail_on_play = True
+    player._reconnect_timer.timeout.emit()
+
+    assert player.state is PlaybackState.RECONNECTING
+    assert player.error_message is None
 
 
 def test_reconnecting_survives_repeated_breaks(player, mpv):

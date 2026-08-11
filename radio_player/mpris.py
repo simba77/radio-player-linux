@@ -96,7 +96,7 @@ class _PlayerAdaptor(QDBusAbstractAdaptor):
 
     @Slot()
     def Play(self) -> None:  # noqa: N802
-        if not self._player.is_playing:
+        if not self._player.is_active:
             self._player.toggle()
 
     @Slot()
@@ -136,7 +136,9 @@ class _PlayerAdaptor(QDBusAbstractAdaptor):
 
     @Property(str)
     def PlaybackStatus(self) -> str:  # noqa: N802
-        return "Playing" if self._player.is_playing else "Stopped"
+        # Буферизация и переподключение — тоже «Playing»: для клиента важно
+        # намерение, иначе апплет мигал бы «Stopped» на каждой заминке потока.
+        return "Playing" if self._player.is_active else "Stopped"
 
     @Property("QVariantMap")
     def Metadata(self) -> dict:  # noqa: N802

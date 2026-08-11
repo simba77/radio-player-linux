@@ -57,9 +57,8 @@ class TrayIcon(QSystemTrayIcon):
             self._on_toggle_window()
 
     def _refresh(self) -> None:
-        playing = self._player.is_playing and not self._player.is_reconnecting
-        self._set_icon(playing)
-        self._play_action.setText(self.tr("Stop") if self._player.is_playing else self.tr("Play"))
+        self._set_icon(self._player.is_playing)
+        self._play_action.setText(self.tr("Stop") if self._player.is_active else self.tr("Play"))
         self.setToolTip(self._tooltip())
 
     def _on_blink(self, on: bool) -> None:

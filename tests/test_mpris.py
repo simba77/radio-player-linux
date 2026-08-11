@@ -11,6 +11,7 @@ import pytest
 
 pytest.importorskip("PySide6.QtDBus")
 
+from PySide6.QtCore import QObject  # noqa: E402
 from PySide6.QtGui import QImage  # noqa: E402
 
 from radio_player import mpris  # noqa: E402
@@ -25,12 +26,13 @@ def test_invalidated_properties_is_string_array():
 
 
 class FakePlayer:
-    """Минимум, который читает `_metadata`."""
+    """Минимум, который читают `_metadata` и адаптер плеера."""
 
-    def __init__(self, station=None, track=None, artwork_path=None):
+    def __init__(self, station=None, track=None, artwork_path=None, is_active=False):
         self.current_station = station
         self.current_track = track
         self.artwork_path = artwork_path
+        self.is_active = is_active
 
 
 STATION = Station(id="s1", name="Моя станция", url="https://example.org/s.m3u8")
@@ -74,3 +76,22 @@ def test_metadata_without_station_is_still_valid():
     """Плеер без выбранной станции обязан отдавать корректный trackid."""
     metadata = mpris._metadata(FakePlayer())
     assert "mpris:trackid" in metadata
+
+
+# MARK: - Состояние воспроизведения
+
+
+def playback_status(*, is_active: bool) -> str:
+    owner = QObject()
+    adaptor = mpris._PlayerAdaptor(owner, FakePlayer(station=STATION, is_active=is_active))
+    return adaptor.PlaybackStatus
+
+
+def test_playback_status_reports_activity_not_sound():
+    """Буферизация и переподключение остаются «Playing».
+
+    Иначе апплет «Медиаплеер» переключался бы в «остановлено» на каждой
+    заминке потока, а вместе с ним прыгала бы кнопка на медиаклавише.
+    """
+    assert playback_status(is_active=True) == "Playing"
+    assert playback_status(is_active=False) == "Stopped"

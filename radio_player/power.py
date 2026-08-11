@@ -57,9 +57,9 @@ class SleepInhibitor(QObject):
 
     @Slot()
     def _sync(self) -> None:
-        # Переподключение тоже удерживает: заснуть в паузе между попытками —
-        # то же самое, что заснуть посреди эфира.
-        self._set_wanted(self._player.is_playing or self._player.is_reconnecting)
+        # Загрузка и переподключение тоже удерживают: заснуть в паузе между
+        # попытками — то же самое, что заснуть посреди эфира.
+        self._set_wanted(self._player.is_active)
 
     def _set_wanted(self, wanted: bool) -> None:
         if wanted == self._wanted:

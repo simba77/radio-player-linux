@@ -19,16 +19,20 @@ pytestmark = pytest.mark.usefixtures("qt_app")
 
 
 class FakePlayer(QObject):
+    """Двойник плеера. Инхибитору важно ровно одно: ждёт ли пользователь звука.
+
+    Что именно считать ожиданием — загрузку, эфир, переподключение — решает
+    `PlayerManager.is_active`, и проверяется это в `test_player.py`.
+    """
+
     state_changed = Signal()
 
     def __init__(self):
         super().__init__()
-        self.is_playing = False
-        self.is_reconnecting = False
+        self.is_active = False
 
-    def set_state(self, *, playing=False, reconnecting=False):
-        self.is_playing = playing
-        self.is_reconnecting = reconnecting
+    def set_active(self, active: bool):
+        self.is_active = active
         self.state_changed.emit()
 
 
@@ -64,34 +68,35 @@ def setup():
 
 def test_playback_takes_the_lock(setup):
     player, inhibitor = setup
-    player.set_state(playing=True)
+    player.set_active(True)
     assert inhibitor.acquired == 1
 
 
 def test_stop_releases_the_lock(setup):
     player, inhibitor = setup
-    player.set_state(playing=True)
+    player.set_active(True)
     inhibitor.reply_with(7)
 
-    player.set_state(playing=False)
+    player.set_active(False)
     assert inhibitor.dropped == [7]
 
 
-def test_reconnect_keeps_the_lock(setup):
+def test_lock_is_held_while_the_player_stays_active(setup):
     """Заснуть между попытками переподключения — то же, что заснуть в эфире."""
     player, inhibitor = setup
-    player.set_state(playing=True)
+    player.set_active(True)
     inhibitor.reply_with(7)
 
-    player.set_state(playing=False, reconnecting=True)
+    # Переподключение — тоже ожидание звука, активность не снимается.
+    player.set_active(True)
     assert inhibitor.dropped == []
 
 
 def test_repeated_state_changes_do_not_stack_locks(setup):
     player, inhibitor = setup
-    player.set_state(playing=True)
+    player.set_active(True)
     inhibitor.reply_with(7)
-    player.set_state(playing=True)
+    player.set_active(True)
     player.state_changed.emit()
 
     assert inhibitor.acquired == 1
@@ -100,8 +105,8 @@ def test_repeated_state_changes_do_not_stack_locks(setup):
 def test_late_reply_is_released_immediately(setup):
     """Ответ пришёл, когда играть уже перестали — cookie нельзя оставлять висеть."""
     player, inhibitor = setup
-    player.set_state(playing=True)
-    player.set_state(playing=False)
+    player.set_active(True)
+    player.set_active(False)
 
     inhibitor.reply_with(7)
     assert inhibitor.dropped == [7]
@@ -109,7 +114,7 @@ def test_late_reply_is_released_immediately(setup):
 
 def test_release_drops_the_lock_on_quit(setup):
     player, inhibitor = setup
-    player.set_state(playing=True)
+    player.set_active(True)
     inhibitor.reply_with(7)
 
     inhibitor.release()

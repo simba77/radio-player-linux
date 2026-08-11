@@ -6,6 +6,12 @@
   и сбрасывается только явным `stop()` — обрыв сети его не отменяет;
 * состояния берутся из наблюдения за mpv, а не выставляются оптимистично;
 * перед каждым запуском потока и в `stop()` снимаются все наблюдатели и таймеры.
+
+Наблюдаемое состояние — одно поле `state`. Раньше их было четыре независимых
+флага, и большинство их комбинаций не значили ничего: «играет и одновременно
+переподключается» — не состояние, а рассинхрон. Свойства `is_playing`,
+`is_loading` и `is_reconnecting` остались как удобные проверки, но теперь они
+выводятся из `state` и разойтись друг с другом не могут.
 """
 
 from __future__ import annotations
@@ -13,6 +19,7 @@ from __future__ import annotations
 import contextlib
 import locale
 from collections.abc import Callable
+from enum import Enum, auto
 from typing import Any, Protocol
 
 from PySide6.QtCore import QCoreApplication, QObject, QTimer, Signal, Slot
@@ -29,6 +36,26 @@ RECONNECT_INTERVAL_MS = 3000
 STALL_TIMEOUT_MS = 6000
 #: Период мигания иконки в трее во время переподключения.
 BLINK_INTERVAL_MS = 600
+
+
+class PlaybackState(Enum):
+    """Что происходит с воспроизведением прямо сейчас."""
+
+    #: Ничего не играет и не запускается.
+    IDLE = auto()
+    #: Поток открыт, но mpv ещё не подтвердил, что звук пошёл.
+    LOADING = auto()
+    #: Идёт эфир — это подтвердил сам mpv, а не наше намерение.
+    PLAYING = auto()
+    #: Связь оборвалась, идут попытки переподключения.
+    RECONNECTING = auto()
+    #: Поток не удалось открыть; причина — в `error_message`.
+    FAILED = auto()
+
+
+#: Состояния, в которых пользователь ждёт звука: кнопка показывает «стоп»,
+#: система не должна засыпать, а MPRIS обязан отвечать «Playing».
+_ACTIVE_STATES = frozenset({PlaybackState.LOADING, PlaybackState.PLAYING, PlaybackState.RECONNECTING})
 
 
 class StationsSource(Protocol):
@@ -53,7 +80,7 @@ def create_mpv() -> Any:
 
 
 class PlayerManager(QObject):
-    #: is_playing / is_loading / is_reconnecting изменились.
+    #: Изменилось `state` или `error_message`.
     state_changed = Signal()
     #: Сменилась станция: `Station | None`.
     station_changed = Signal(object)
@@ -78,9 +105,7 @@ class PlayerManager(QObject):
         super().__init__(parent)
         self._store = store
 
-        self.is_playing = False
-        self.is_loading = False
-        self.is_reconnecting = False
+        self.state = PlaybackState.IDLE
         self.blink_on = False
         self.current_station: Station | None = None
         self.current_track: TrackInfo | None = None
@@ -110,6 +135,37 @@ class PlayerManager(QObject):
 
         self._restore_last_station(state.get("last_station_id"))
 
+    # MARK: - Состояние
+
+    @property
+    def is_active(self) -> bool:
+        """Пользователь ждёт звука: играет, загружается или переподключается.
+
+        Именно это, а не факт звука, определяет вид кнопки, запрет засыпания
+        и `PlaybackStatus` в MPRIS — иначе они мигали бы на каждой буферизации.
+        """
+        return self.state in _ACTIVE_STATES
+
+    @property
+    def is_playing(self) -> bool:
+        """Эфир действительно идёт — по данным mpv, а не по нашему намерению."""
+        return self.state is PlaybackState.PLAYING
+
+    @property
+    def is_loading(self) -> bool:
+        return self.state is PlaybackState.LOADING
+
+    @property
+    def is_reconnecting(self) -> bool:
+        return self.state is PlaybackState.RECONNECTING
+
+    def _set_state(self, state: PlaybackState, *, error: str | None = None) -> None:
+        if state is self.state and error == self.error_message:
+            return
+        self.state = state
+        self.error_message = error
+        self.state_changed.emit()
+
     # MARK: - Публичное управление
 
     def play(self, station: Station) -> None:
@@ -118,10 +174,8 @@ class PlayerManager(QObject):
         self.station_changed.emit(station)
 
         self._set_track(None)
-        self.error_message = None
         self._should_be_playing = True
         self._reconnect_timer.stop()
-        self.is_reconnecting = False
         self._stop_blinking()
 
         self._start_metadata(station)
@@ -137,14 +191,11 @@ class PlayerManager(QObject):
         with contextlib.suppress(OSError, RuntimeError):
             self._mpv.command("stop")
 
-        self.is_playing = False
-        self.is_loading = False
-        self.is_reconnecting = False
         self._set_track(None)
-        self.state_changed.emit()
+        self._set_state(PlaybackState.IDLE)
 
     def toggle(self) -> None:
-        if self.is_playing:
+        if self.is_active:
             self.stop()
         elif self.current_station is not None:
             self.play(self.current_station)
@@ -196,9 +247,9 @@ class PlayerManager(QObject):
             self._fail(message.format(error=exc))
             return
 
-        self.is_loading = True
-        self.is_playing = True
-        self.state_changed.emit()
+        # Играем не мы, а mpv: пока он не подтвердил звук, состояние — загрузка.
+        if not self.is_reconnecting:
+            self._set_state(PlaybackState.LOADING)
         self._stall_timer.start()
 
     def _play_relative(self, offset: int) -> None:
@@ -241,8 +292,7 @@ class PlayerManager(QObject):
                 self._on_playback_started()
         elif name == "paused-for-cache" and value is True:
             if self._should_be_playing and not self.is_reconnecting:
-                self.is_loading = True
-                self.state_changed.emit()
+                self._set_state(PlaybackState.LOADING)
                 self._stall_timer.start()
         # Для live-радио и ошибка, и «конец файла» означают обрыв. Но не наши
         # собственные stop/quit и не redirect — там mpv продолжает сам.
@@ -252,21 +302,18 @@ class PlayerManager(QObject):
     def _on_playback_started(self) -> None:
         """Поток реально пошёл: гасим индикаторы и сторожевые таймеры."""
         self._stall_timer.stop()
-        was_reconnecting = self.is_reconnecting
-        self.is_loading = False
-        self.is_playing = self._should_be_playing
-        self.error_message = None
-        if was_reconnecting:
-            self.is_reconnecting = False
+        if self.is_reconnecting:
             self._reconnect_timer.stop()
             self._stop_blinking()
-        self.state_changed.emit()
+        self._set_state(PlaybackState.PLAYING if self._should_be_playing else PlaybackState.IDLE)
 
     def _fail(self, message: str) -> None:
-        self.error_message = message
-        self.is_loading = False
-        self.is_playing = False
-        self.state_changed.emit()
+        # Во время переподключения неудачная попытка — часть цикла, а не событие:
+        # индикатор иначе дёргался бы между «переподключение» и ошибкой.
+        if self.is_reconnecting:
+            return
+        # Намерение играть не сбрасываем: вернётся сеть — попробуем снова.
+        self._set_state(PlaybackState.FAILED, error=message)
         self.error_occurred.emit(message)
 
     # MARK: - Реконнект
@@ -274,10 +321,8 @@ class PlayerManager(QObject):
     def _begin_reconnecting(self) -> None:
         if not self._should_be_playing or self.is_reconnecting:
             return
-        self.is_reconnecting = True
-        self.is_loading = False
         self._stall_timer.stop()
-        self.state_changed.emit()
+        self._set_state(PlaybackState.RECONNECTING)
         self._blink_timer.start()
         self._reconnect_timer.start()
 

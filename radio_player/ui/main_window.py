@@ -127,7 +127,9 @@ class MainWindow(QWidget):
     def _refresh_rows(self) -> None:
         """Отмечает активную станцию иконкой и полужирным начертанием."""
         current_id = self._player.current_station.id if self._player.current_station else None
-        playing = self._player.is_playing
+        # Загрузка и переподключение для строки списка — то же, что игра:
+        # иконка не должна прыгать на каждой заминке потока.
+        playing = self._player.is_active
 
         for row in range(self._list.count()):
             item = self._list.item(row)
@@ -156,7 +158,7 @@ class MainWindow(QWidget):
         if station is None:
             return
         current = self._player.current_station
-        if self._player.is_playing and current is not None and current.id == station.id:
+        if self._player.is_active and current is not None and current.id == station.id:
             self._player.stop()
         else:
             self._player.play(station)
