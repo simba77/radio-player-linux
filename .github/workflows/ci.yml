@@ -41,6 +41,9 @@ jobs:
       - name: Lint
         run: make lint
 
+      - name: Typecheck
+        run: make typecheck
+
       # Сюда же входит проверка каталога переводов на дрейф от кода.
       - name: Test
         run: make test

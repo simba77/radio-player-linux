@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import json
 import re
+from collections.abc import Callable
 from urllib.parse import urljoin
 
 from PySide6.QtCore import QObject, QTimer, QUrl
@@ -68,7 +69,7 @@ class HlsDaterangeProvider(MetadataProvider):
 
     # MARK: - Запросы
 
-    def _get(self, url: str, handler) -> None:
+    def _get(self, url: str, handler: Callable[[str | None], None]) -> None:
         request = QNetworkRequest(QUrl(url))
         request.setAttribute(
             QNetworkRequest.Attribute.CacheLoadControlAttribute,
@@ -83,7 +84,7 @@ class HlsDaterangeProvider(MetadataProvider):
             reply.deleteLater()
             if reply.error() == QNetworkReply.NetworkError.OperationCanceledError:
                 return
-            body = bytes(reply.readAll()).decode("utf-8", errors="replace")
+            body = bytes(reply.readAll().data()).decode("utf-8", errors="replace")
             handler(body if reply.error() == QNetworkReply.NetworkError.NoError else None)
 
         reply.finished.connect(on_finished)
@@ -176,5 +177,5 @@ def _extract_cover(body: str) -> str | None:
     for key in _COVER_KEYS:
         url = current.get(key)
         if url:
-            return url
+            return str(url)
     return None

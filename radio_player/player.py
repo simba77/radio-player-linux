@@ -292,16 +292,16 @@ class PlayerManager(QObject):
 
     # MARK: - События mpv
 
-    def _emit_property(self, name: str, value) -> None:
+    def _emit_property(self, name: str, value: object) -> None:
         """Вызывается из потока mpv — только перебрасывает значение в поток Qt."""
         self._mpv_signal.emit(name, value)
 
-    def _on_end_file(self, event) -> None:
+    def _on_end_file(self, event: Any) -> None:
         reason = getattr(getattr(event, "data", None), "reason", None)
         self._mpv_signal.emit("end-file", reason)
 
     @Slot(str, object)
-    def _handle_mpv_signal(self, name: str, value) -> None:
+    def _handle_mpv_signal(self, name: str, value: object) -> None:
         if name == "core-idle":
             if value is False:
                 self._on_playback_started()
@@ -429,7 +429,7 @@ _END_FILE_REASONS = {0: "eof", 2: "stop", 3: "quit", 4: "error", 5: "redirect"}
 _DISCONNECT_REASONS = frozenset({"eof", "error"})
 
 
-def _end_file_means_disconnect(reason) -> bool:
+def _end_file_means_disconnect(reason: object) -> bool:
     if isinstance(reason, int):
         name = _END_FILE_REASONS.get(reason, "")
     else:
@@ -438,7 +438,9 @@ def _end_file_means_disconnect(reason) -> bool:
     return name in _DISCONNECT_REASONS
 
 
-def _make_timer(parent: QObject, interval_ms: int, slot, *, single_shot: bool = False) -> QTimer:
+def _make_timer(
+    parent: QObject, interval_ms: int, slot: Callable[[], None], *, single_shot: bool = False
+) -> QTimer:
     timer = QTimer(parent)
     timer.setInterval(interval_ms)
     timer.setSingleShot(single_shot)

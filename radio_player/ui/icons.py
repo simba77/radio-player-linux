@@ -35,6 +35,8 @@ def get(name: str) -> QIcon:
         return icon
     standard = _FALLBACKS.get(name)
     app = QApplication.instance()
-    if standard is None or app is None:
+    # Стандартные пиктограммы живёт в стиле QApplication: в консольном
+    # приложении (QCoreApplication) его нет, и подставить нам нечего.
+    if standard is None or not isinstance(app, QApplication):
         return QIcon()
     return app.style().standardIcon(standard)

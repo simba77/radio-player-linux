@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterator
 from contextlib import contextmanager
 from pathlib import Path
 
@@ -30,6 +31,7 @@ from PySide6.QtWidgets import (
 )
 
 from .. import autostart, catalog, i18n, playlist_io
+from ..models import Catalog
 from ..settings import MAX_UPDATE_INTERVAL_HOURS, MIN_UPDATE_INTERVAL_HOURS
 from ..settings_store import SettingsStore
 from ..station_store import StationStore
@@ -299,7 +301,7 @@ class StationsTab(QWidget):
             else:
                 self._store.hide(station_id)
 
-    def _on_rows_moved(self, *_args) -> None:
+    def _on_rows_moved(self, *_args: object) -> None:
         """Порядок задаётся видимыми строками — их и отправляем в хранилище."""
         if self._applying:
             return
@@ -312,7 +314,7 @@ class StationsTab(QWidget):
             self._store.set_order(order)
 
     @contextmanager
-    def _batch(self):
+    def _batch(self) -> Iterator[None]:
         """Применяет правки, отложив перестроение списка до выхода из обработчика."""
         self._applying = True
         try:
@@ -510,7 +512,7 @@ class CatalogsTab(QWidget):
         self._update_status()
         self._update_buttons()
 
-    def _on_update_finished(self, _catalogs: list, changed: bool) -> None:
+    def _on_update_finished(self, _catalogs: list[Catalog], changed: bool) -> None:
         self._update_status()
         self._update_buttons()
         if not changed:

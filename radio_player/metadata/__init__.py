@@ -7,6 +7,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from PySide6.QtCore import QObject, Signal
 
 from ..models import Station, TrackInfo
@@ -31,7 +33,7 @@ class MetadataProvider(QObject):
         raise NotImplementedError
 
 
-def make_provider(station: Station, mpv_player, parent: QObject | None = None) -> MetadataProvider:
+def make_provider(station: Station, mpv_player: Any, parent: QObject | None = None) -> MetadataProvider:
     """Выбирает провайдера по типу потока."""
     from .hls_daterange import HlsDaterangeProvider
     from .icy import IcyProvider

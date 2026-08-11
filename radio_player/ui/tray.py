@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
+from PySide6.QtCore import QObject
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QMenu, QSystemTrayIcon
 
@@ -27,7 +28,7 @@ class TrayIcon(QSystemTrayIcon):
         on_toggle_window: Callable[[], None],
         on_settings: Callable[[], None],
         on_quit: Callable[[], None],
-        parent=None,
+        parent: QObject | None = None,
     ) -> None:
         super().__init__(parent)
         self._player = player

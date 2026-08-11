@@ -53,7 +53,7 @@ def main() -> int:
     player = PlayerManager(store)
     install_network_monitor(player, app)
 
-    updater.finished.connect(lambda catalogs, changed: changed and store.set_catalogs(catalogs))
+    updater.finished.connect(lambda catalogs, changed: store.set_catalogs(catalogs) if changed else None)
     wire_catalog_sources(settings, updater, store)
 
     window = MainWindow(player, store, settings, updater)

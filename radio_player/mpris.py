@@ -11,6 +11,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from pathlib import Path
+from typing import Any
 
 from PySide6.QtCore import ClassInfo, Property, QMetaType, QObject, Slot
 from PySide6.QtDBus import (
@@ -148,7 +149,7 @@ class _PlayerAdaptor(QDBusAbstractAdaptor):
         return "Playing" if self._player.is_active else "Stopped"
 
     @Property("QVariantMap")
-    def Metadata(self) -> dict:
+    def Metadata(self) -> dict[str, Any]:
         return _metadata(self._player)
 
     def _get_volume(self) -> float:
@@ -260,7 +261,7 @@ class MprisServer(QObject):
     def _emit_metadata(self) -> None:
         self._emit_properties({"Metadata": _metadata(self._player)})
 
-    def _emit_properties(self, changed: dict) -> None:
+    def _emit_properties(self, changed: dict[str, Any]) -> None:
         if not self._registered:
             return
         message = QDBusMessage.createSignal(OBJECT_PATH, _PROPERTIES_INTERFACE, "PropertiesChanged")
@@ -283,9 +284,9 @@ def _empty_string_list() -> QDBusArgument:
     return argument
 
 
-def _metadata(player: PlayerManager) -> dict:
+def _metadata(player: PlayerManager) -> dict[str, Any]:
     """Метаданные текущего трека в формате MPRIS."""
-    metadata: dict = {"mpris:trackid": QDBusObjectPath(_TRACK_ID)}
+    metadata: dict[str, Any] = {"mpris:trackid": QDBusObjectPath(_TRACK_ID)}
 
     station = player.current_station
     track = player.current_track

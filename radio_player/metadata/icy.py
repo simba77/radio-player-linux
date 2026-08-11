@@ -8,6 +8,7 @@ libmpv отдаёт их в свойстве `metadata` ключом `icy-title`
 from __future__ import annotations
 
 import contextlib
+from typing import Any
 
 from PySide6.QtCore import QObject, Signal, Slot
 
@@ -25,7 +26,7 @@ class IcyProvider(MetadataProvider):
 
     _raw_metadata = Signal(object)
 
-    def __init__(self, mpv_player, parent: QObject | None = None) -> None:
+    def __init__(self, mpv_player: Any, parent: QObject | None = None) -> None:
         super().__init__(parent)
         self._mpv = mpv_player
         self._observer = None
@@ -36,7 +37,7 @@ class IcyProvider(MetadataProvider):
         self.stop()
         self._last_raw = None
 
-        def observer(_name, value):
+        def observer(_name: str, value: object) -> None:
             self._raw_metadata.emit(value)
 
         self._observer = observer
@@ -53,7 +54,7 @@ class IcyProvider(MetadataProvider):
             self.track_cleared.emit()
 
     @Slot(object)
-    def _handle_metadata(self, value) -> None:
+    def _handle_metadata(self, value: object) -> None:
         if self._observer is None or not isinstance(value, dict):
             return
         raw = value.get("icy-title") or value.get("title")

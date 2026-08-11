@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any
 
 from . import i18n, paths, storage
@@ -77,5 +78,5 @@ def save(settings: Settings) -> bool:
     return storage.write_json(_path(), settings.to_dict())
 
 
-def _path():
+def _path() -> Path:
     return paths.config_dir() / "settings.json"

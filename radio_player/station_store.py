@@ -8,6 +8,7 @@
 from __future__ import annotations
 
 from dataclasses import replace
+from pathlib import Path
 
 from PySide6.QtCore import QObject, Signal
 
@@ -217,7 +218,7 @@ class StationStore(QObject):
         self._rebuild()
 
     @staticmethod
-    def _overlay_path():
+    def _overlay_path() -> Path:
         return paths.config_dir() / "overlay.json"
 
 

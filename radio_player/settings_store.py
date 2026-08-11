@@ -81,7 +81,7 @@ class SettingsStore(QObject):
 
     # MARK: - Сохранение
 
-    def _update(self, **values) -> None:
+    def _update(self, **values: object) -> None:
         # Настройки приходят из виджетов, а те шлют сигнал и когда значение
         # не изменилось: без этой проверки каждый показ окна писал бы файл.
         if all(getattr(self._settings, name) == value for name, value in values.items()):

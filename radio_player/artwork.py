@@ -60,7 +60,7 @@ class ArtworkLoader(QObject):
         if reply.error() != QNetworkReply.NetworkError.NoError:
             return
 
-        data = bytes(reply.readAll())
+        data = reply.readAll().data()
         if not data or len(data) > _MAX_BYTES:
             return
         image = QImage()

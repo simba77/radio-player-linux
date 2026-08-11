@@ -79,3 +79,35 @@ extend-ignore-names = ["closeEvent", "mousePressEvent", "visit_*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+[tool.mypy]
+python_version = "3.12"
+files = ["radio_player"]
+# Аннотации в проекте есть почти везде, но без проверки они остаются
+# документацией. Здесь — базовый режим для кода вокруг Qt; ниже строгий
+# для модулей, которые Qt не касаются.
+warn_unused_ignores = true
+warn_redundant_casts = true
+
+[[tool.mypy.overrides]]
+module = [
+    "radio_player.models",
+    "radio_player.paths",
+    "radio_player.playlist_io",
+    "radio_player.settings",
+    "radio_player.storage",
+    "radio_player.metadata.hls_daterange",
+]
+strict = true
+
+[[tool.mypy.overrides]]
+# python-mpv поставляется без аннотаций.
+module = ["mpv"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+# Стабы PySide6 местами расходятся с тем, что биндинг принимает на самом деле:
+# QByteArray не объявлен как буфер, типы Qt задаются строками ("QStringList"),
+# декоратор ClassInfo описан неверно. Это ошибки описания, а не нашего кода.
+module = ["radio_player.mpris", "radio_player.catalog", "radio_player.artwork"]
+disable_error_code = ["call-overload", "arg-type", "call-arg", "operator"]

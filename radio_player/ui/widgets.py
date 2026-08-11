@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
+
 from PySide6.QtCore import QCoreApplication, Qt, QTimer, Signal
 from PySide6.QtGui import (
     QGuiApplication,
     QImage,
+    QMouseEvent,
     QPainter,
     QPainterPath,
     QPalette,
@@ -35,7 +38,7 @@ class ClickableLabel(QLabel):
 
     clicked = Signal()
 
-    def mousePressEvent(self, event) -> None:  # имя переопределяемого метода Qt
+    def mousePressEvent(self, event: QMouseEvent) -> None:  # имя переопределяемого метода Qt
         if event.button() == Qt.MouseButton.LeftButton:
             self.clicked.emit()
         super().mousePressEvent(event)
@@ -209,7 +212,7 @@ def _placeholder_pixmap(ratio: float) -> QPixmap:
     return pixmap
 
 
-def _tool_button(icon_name: str, tooltip: str, slot) -> QPushButton:
+def _tool_button(icon_name: str, tooltip: str, slot: Callable[[], None]) -> QPushButton:
     button = QPushButton()
     button.setIcon(icons.get(icon_name))
     button.setToolTip(tooltip)

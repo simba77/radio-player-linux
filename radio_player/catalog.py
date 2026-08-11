@@ -169,7 +169,7 @@ class CatalogUpdater(QObject):
             return  # Каталог не менялся.
 
         try:
-            data = json.loads(bytes(reply.readAll()).decode("utf-8"))
+            data = json.loads(bytes(reply.readAll().data()).decode("utf-8"))
         except (UnicodeDecodeError, json.JSONDecodeError):
             return
         catalog = Catalog.from_dict(data)
@@ -181,7 +181,7 @@ class CatalogUpdater(QObject):
             return
         self._changed = True
 
-        etag = bytes(reply.rawHeader(b"ETag")).decode(errors="ignore")
+        etag = bytes(reply.rawHeader(b"ETag").data()).decode(errors="ignore")
         etags = _etags()
         if etag:
             etags[url] = etag
