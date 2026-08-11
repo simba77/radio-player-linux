@@ -9,6 +9,8 @@ config_home="${XDG_CONFIG_HOME:-$HOME/.config}"
 
 rm -rf "$PREFIX/lib/radio-player"
 rm -f "$PREFIX/bin/radio-player"
+rm -f "$PREFIX/share/applications/io.github.simba77.RadioPlayer.desktop"
+# Имя из версий до перехода на reverse-DNS.
 rm -f "$PREFIX/share/applications/radio-player.desktop"
 
 # Файл автозапуска создаёт само приложение, и он указывает на команду, которую

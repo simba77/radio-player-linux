@@ -31,7 +31,9 @@ exec python3 -m radio_player "\$@"
 EOF
 chmod 755 "$bindir/radio-player"
 
-cp "$source_root/radio_player/resources/radio-player.desktop" "$appdir/"
+# Ярлык из версий до перехода на reverse-DNS: иначе в меню останутся два.
+rm -f "$appdir/radio-player.desktop"
+cp "$source_root/radio_player/resources/io.github.simba77.RadioPlayer.desktop" "$appdir/"
 
 echo "Установлено в $PREFIX"
 case ":$PATH:" in

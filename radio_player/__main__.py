@@ -8,7 +8,7 @@ import sys
 from PySide6.QtCore import QTimer
 from PySide6.QtWidgets import QApplication, QSystemTrayIcon
 
-from . import APP_ID, APP_NAME, catalog, i18n, paths
+from . import APP_NAME, APP_RDNS_ID, APP_VERSION, catalog, i18n, paths
 from . import settings as settings_module
 from .mpris import MprisServer
 from .network import install_network_monitor
@@ -37,7 +37,9 @@ def main() -> int:
 
     app = QApplication(sys.argv)
     app.setApplicationName(APP_NAME)
-    app.setDesktopFileName(APP_ID)
+    app.setApplicationVersion(APP_VERSION)
+    # Имя `.desktop`-файла: по нему Wayland связывает окно с иконкой приложения.
+    app.setDesktopFileName(APP_RDNS_ID)
     # Окно прячется в трей — Qt не должен завершать приложение при закрытии последнего окна.
     app.setQuitOnLastWindowClosed(False)
 

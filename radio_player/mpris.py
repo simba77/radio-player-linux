@@ -21,10 +21,11 @@ from PySide6.QtDBus import (
     QDBusObjectPath,
 )
 
-from . import APP_ID, APP_NAME
+from . import APP_NAME, APP_RDNS_ID
 from .player import PlayerManager
 
-BUS_NAME = f"org.mpris.MediaPlayer2.{APP_ID.replace('-', '_')}"
+#: Спецификация просит, чтобы имя на шине совпадало с именем `.desktop`-файла.
+BUS_NAME = f"org.mpris.MediaPlayer2.{APP_RDNS_ID}"
 OBJECT_PATH = "/org/mpris/MediaPlayer2"
 
 _ROOT_INTERFACE = "org.mpris.MediaPlayer2"
@@ -70,7 +71,9 @@ class _RootAdaptor(QDBusAbstractAdaptor):
 
     @Property(str)
     def DesktopEntry(self) -> str:  # noqa: N802
-        return APP_ID
+        """Имя `.desktop`-файла без расширения: по нему оболочка находит
+        иконку и название приложения для апплета «Медиаплеер»."""
+        return APP_RDNS_ID
 
     @Property("QStringList")
     def SupportedUriSchemes(self) -> list[str]:  # noqa: N802

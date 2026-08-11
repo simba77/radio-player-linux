@@ -68,3 +68,10 @@ player holds the system awake, and idle auto-suspend cuts the stream off.
 - **Default stations are never hardcoded** — they come from JSON catalogs and are merged with the
   user's local overlay; a catalog update never overwrites the user's edits.
 - **All paths to user files live in `paths.py`** (XDG). No other module builds paths.
+- **The app has two names on purpose.** `APP_ID` (`radio-player`) is the command and the directory
+  under `~/.config`; `APP_RDNS_ID` (`io.github.simba77.RadioPlayer`) is how the system knows the
+  app — `.desktop` file, icons, AppStream, D-Bus. Anything visible outside the process uses the
+  reverse-DNS one: on Wayland the window finds its icon only when `setDesktopFileName` matches the
+  entry exactly.
+- **The catalog cache is a derivative of the source list**, keyed by URL: a catalog removed from
+  the settings stops contributing stations, and its file is pruned.
