@@ -18,12 +18,13 @@ LUPDATE ?= $(shell command -v pyside6-lupdate 2>/dev/null || echo /usr/lib/qt6/b
 LANGUAGES := ru en
 SCANNED_LANGUAGES := ru
 
-.PHONY: help run probe deps deps-i18n devenv lint format typecheck test i18n-update i18n-release install uninstall deb clean
+.PHONY: help run probe deps deps-i18n devenv check lint format typecheck test i18n-update i18n-release install uninstall deb clean
 
 help:
 	@echo "make deps      — установить системные зависимости (нужен sudo)"
 	@echo "make deps-i18n — инструменты для работы над переводами (нужен sudo)"
-	@echo "make devenv    — создать .venv с pytest, ruff и mypy"
+	@echo "make devenv    — создать .venv с инструментами разработки"
+	@echo "make check     — линтер, типы и тесты разом"
 	@echo "make run       — запустить приложение"
 	@echo "make probe     — диагностика метаданных живого потока"
 	@echo "make lint      — ruff: правила и форматирование"
@@ -38,7 +39,7 @@ help:
 
 devenv:
 	$(PYTHON) -m venv --system-site-packages $(VENV)
-	$(VENV)/bin/pip install --quiet --upgrade pytest ruff mypy
+	$(VENV)/bin/pip install --quiet --requirement requirements-dev.txt
 
 deps:
 	sudo apt install -y libmpv2 python3-mpv \
@@ -55,6 +56,8 @@ run:
 
 probe:
 	$(PYTHON) scripts/probe_metadata.py $(URL)
+
+check: lint typecheck test
 
 lint: $(VENV_PY)
 	$(VENV)/bin/ruff check .

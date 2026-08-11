@@ -61,9 +61,9 @@ make run
 ## Development
 
 ```bash
-make devenv  # .venv with pytest and ruff (system packages visible via --system-site-packages)
-make test
-make lint
+make devenv  # .venv with the pinned dev tools (system packages stay visible)
+make check   # lint, types and tests — what CI runs
+make format  # apply ruff format and the fixes ruff can make itself
 make probe   # inspect metadata of a live stream
 ```
 
