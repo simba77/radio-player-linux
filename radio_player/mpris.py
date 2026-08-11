@@ -241,12 +241,14 @@ class MprisServer(QObject):
     # MARK: - Уведомления
 
     def _emit_playback_status(self) -> None:
-        self._emit_properties({
-            "PlaybackStatus": self._player_adaptor.PlaybackStatus,
-            "CanGoNext": self._player_adaptor.CanGoNext,
-            "CanGoPrevious": self._player_adaptor.CanGoPrevious,
-            "CanPlay": self._player_adaptor.CanPlay,
-        })
+        self._emit_properties(
+            {
+                "PlaybackStatus": self._player_adaptor.PlaybackStatus,
+                "CanGoNext": self._player_adaptor.CanGoNext,
+                "CanGoPrevious": self._player_adaptor.CanGoPrevious,
+                "CanPlay": self._player_adaptor.CanPlay,
+            }
+        )
 
     def _emit_metadata(self) -> None:
         self._emit_properties({"Metadata": _metadata(self._player)})

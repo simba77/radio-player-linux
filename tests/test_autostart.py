@@ -23,7 +23,8 @@ def test_creates_and_removes_desktop_file():
 def _exec_line() -> str:
     autostart.set_enabled(True)
     return next(
-        line for line in paths.autostart_file().read_text(encoding="utf-8").splitlines()
+        line
+        for line in paths.autostart_file().read_text(encoding="utf-8").splitlines()
         if line.startswith("Exec=")
     )
 

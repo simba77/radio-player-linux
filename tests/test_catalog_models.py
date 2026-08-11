@@ -42,35 +42,45 @@ def test_catalog_without_stations_is_rejected():
 
 
 def test_catalog_skips_broken_stations_but_keeps_good_ones():
-    parsed = Catalog.from_dict({
-        **VALID,
-        "stations": [
-            {"id": "ok", "name": "Хорошая", "url": "https://example.org/ok.m3u8"},
-            {"id": "no-url", "name": "Без адреса"},
-            {"name": "Без id", "url": "https://example.org/x.m3u8"},
-            "мусор",
-        ],
-    })
+    parsed = Catalog.from_dict(
+        {
+            **VALID,
+            "stations": [
+                {"id": "ok", "name": "Хорошая", "url": "https://example.org/ok.m3u8"},
+                {"id": "no-url", "name": "Без адреса"},
+                {"name": "Без id", "url": "https://example.org/x.m3u8"},
+                "мусор",
+            ],
+        }
+    )
     assert parsed is not None
     assert [s.id for s in parsed.stations] == ["ok"]
 
 
 def test_catalog_ignores_duplicate_station_ids():
-    parsed = Catalog.from_dict({
-        **VALID,
-        "stations": [
-            {"id": "dup", "name": "Первая", "url": "https://example.org/1.m3u8"},
-            {"id": "dup", "name": "Вторая", "url": "https://example.org/2.m3u8"},
-        ],
-    })
+    parsed = Catalog.from_dict(
+        {
+            **VALID,
+            "stations": [
+                {"id": "dup", "name": "Первая", "url": "https://example.org/1.m3u8"},
+                {"id": "dup", "name": "Вторая", "url": "https://example.org/2.m3u8"},
+            ],
+        }
+    )
     assert parsed is not None
     assert [s.name for s in parsed.stations] == ["Первая"]
 
 
 def test_catalog_ignores_unknown_fields():
-    parsed = Catalog.from_dict({**VALID, "publisher": "кто-то", "stations": [
-        {"id": "x", "name": "X", "url": "https://example.org/x.m3u8", "tags": ["electronic"]},
-    ]})
+    parsed = Catalog.from_dict(
+        {
+            **VALID,
+            "publisher": "кто-то",
+            "stations": [
+                {"id": "x", "name": "X", "url": "https://example.org/x.m3u8", "tags": ["electronic"]},
+            ],
+        }
+    )
     assert parsed is not None
 
 

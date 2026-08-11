@@ -122,9 +122,7 @@ class StationStore(QObject):
         copy = Station(name=original.name, url=original.url)
         self._overlay.custom.append(copy)
         self._overlay.hidden.add(station_id)
-        self._overlay.order = [
-            copy.id if item == station_id else item for item in self._current_order()
-        ]
+        self._overlay.order = [copy.id if item == station_id else item for item in self._current_order()]
         self._commit()
         return copy
 

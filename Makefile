@@ -18,7 +18,7 @@ LUPDATE ?= $(shell command -v pyside6-lupdate 2>/dev/null || echo /usr/lib/qt6/b
 LANGUAGES := ru en
 SCANNED_LANGUAGES := ru
 
-.PHONY: help run probe deps deps-i18n devenv lint test i18n-update i18n-release install uninstall deb clean
+.PHONY: help run probe deps deps-i18n devenv lint format test i18n-update i18n-release install uninstall deb clean
 
 help:
 	@echo "make deps      — установить системные зависимости (нужен sudo)"
@@ -26,7 +26,8 @@ help:
 	@echo "make devenv    — создать .venv с pytest и ruff"
 	@echo "make run       — запустить приложение"
 	@echo "make probe     — диагностика метаданных живого потока"
-	@echo "make lint      — ruff"
+	@echo "make lint      — ruff: правила и форматирование"
+	@echo "make format    — отформатировать код и починить, что чинится само"
 	@echo "make test      — pytest"
 	@echo "make i18n-update  — обновить .ts новыми строками из кода"
 	@echo "make i18n-release — собрать .qm из .ts"
@@ -56,6 +57,11 @@ probe:
 
 lint: $(VENV_PY)
 	$(VENV)/bin/ruff check .
+	$(VENV)/bin/ruff format --check .
+
+format: $(VENV_PY)
+	$(VENV)/bin/ruff format .
+	$(VENV)/bin/ruff check --fix .
 
 test: $(VENV_PY)
 	$(VENV_PY) -m pytest

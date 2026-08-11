@@ -136,9 +136,7 @@ class PlayerManager(QObject):
         self._reconnect_timer = _make_timer(self, RECONNECT_INTERVAL_MS, self._attempt_reconnect)
         self._stall_timer = _make_timer(self, STALL_TIMEOUT_MS, self._on_stalled, single_shot=True)
         self._blink_timer = _make_timer(self, BLINK_INTERVAL_MS, self._on_blink)
-        self._volume_save_timer = _make_timer(
-            self, VOLUME_SAVE_DELAY_MS, self._save_volume, single_shot=True
-        )
+        self._volume_save_timer = _make_timer(self, VOLUME_SAVE_DELAY_MS, self._save_volume, single_shot=True)
 
         self._restore_last_station(state.get("last_station_id"))
 

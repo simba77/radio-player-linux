@@ -115,9 +115,7 @@ class GeneralTab(QWidget):
         self._autostart.blockSignals(True)
         self._autostart.setChecked(actual)
         self._autostart.blockSignals(False)
-        QMessageBox.warning(
-            self, self.tr("Start at login"), self.tr("Could not change the startup setting.")
-        )
+        QMessageBox.warning(self, self.tr("Start at login"), self.tr("Could not change the startup setting."))
 
     def _on_close_to_tray_toggled(self, enabled: bool) -> None:
         self._settings.set_close_to_tray(enabled)
@@ -237,10 +235,7 @@ class StationsTab(QWidget):
         buttons.addWidget(self._export_button)
 
         hint = QLabel(
-            self.tr(
-                "Uncheck a station to hide it. Rename with a double click, "
-                "reorder by dragging."
-            )
+            self.tr("Uncheck a station to hide it. Rename with a double click, reorder by dragging.")
         )
         hint.setWordWrap(True)
 
@@ -362,9 +357,7 @@ class StationsTab(QWidget):
             return
         stations = playlist_io.read_file(Path(path))
         if not stations:
-            QMessageBox.warning(
-                self, self.tr("Import"), self.tr("No stations were found in the file.")
-            )
+            QMessageBox.warning(self, self.tr("Import"), self.tr("No stations were found in the file."))
             return
         for station in stations:
             self._store.add_custom(station.name, station.url)
@@ -470,9 +463,7 @@ class CatalogsTab(QWidget):
         if elapsed is None:
             self._status.setText(self.tr("The catalogs have never been updated."))
         else:
-            self._status.setText(
-                self.tr("Last update: {ago} ago.").format(ago=self._humanize(elapsed))
-            )
+            self._status.setText(self.tr("Last update: {ago} ago.").format(ago=self._humanize(elapsed)))
 
     def _humanize(self, seconds: float) -> str:
         """Прошедшее время словами. Формы числа расставляет Qt по правилам языка.
@@ -501,9 +492,7 @@ class CatalogsTab(QWidget):
         if not ok or not url:
             return
         if not url.startswith(("http://", "https://")):
-            QMessageBox.warning(
-                self, title, self.tr("The link must start with http:// or https://")
-            )
+            QMessageBox.warning(self, title, self.tr("The link must start with http:// or https://"))
             return
         if url in catalog.DEFAULT_CATALOG_URLS or not self._settings.add_catalog_url(url):
             return
@@ -526,5 +515,3 @@ class CatalogsTab(QWidget):
         self._update_buttons()
         if not changed:
             self._status.setText(self._status.text() + " " + self.tr("No changes."))
-
-

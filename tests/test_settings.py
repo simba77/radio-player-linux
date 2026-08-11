@@ -15,7 +15,9 @@ def test_defaults_when_file_missing():
 
 def test_roundtrip():
     settings_module.save(
-        Settings(close_to_tray=False, update_interval_hours=6, extra_catalog_urls=["https://example.org/c.json"])
+        Settings(
+            close_to_tray=False, update_interval_hours=6, extra_catalog_urls=["https://example.org/c.json"]
+        )
     )
     loaded = settings_module.load()
     assert loaded.close_to_tray is False
@@ -36,8 +38,9 @@ def test_broken_values_fall_back_to_defaults():
 
 
 def test_non_http_catalog_urls_are_dropped():
-    loaded = Settings.from_dict({"extra_catalog_urls": ["ftp://example.org/c.json", "/etc/passwd",
-                                                        "https://example.org/ok.json"]})
+    loaded = Settings.from_dict(
+        {"extra_catalog_urls": ["ftp://example.org/c.json", "/etc/passwd", "https://example.org/ok.json"]}
+    )
     assert loaded.extra_catalog_urls == ["https://example.org/ok.json"]
 
 

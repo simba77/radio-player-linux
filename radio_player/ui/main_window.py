@@ -69,9 +69,7 @@ class MainWindow(QWidget):
         self._list.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
         self._list.setVerticalScrollMode(QAbstractItemView.ScrollMode.ScrollPerPixel)
         self._list.setIconSize(QSize(_ROW_ICON_SIZE, _ROW_ICON_SIZE))
-        self._list.setStyleSheet(
-            "QListWidget { padding: 4px 6px; } QListWidget::item { padding: 5px 6px; }"
-        )
+        self._list.setStyleSheet("QListWidget { padding: 4px 6px; } QListWidget::item { padding: 5px 6px; }")
         self._list.itemClicked.connect(self._on_item_clicked)
 
         separator = QFrame()

@@ -70,8 +70,10 @@ class HlsDaterangeProvider(MetadataProvider):
 
     def _get(self, url: str, handler) -> None:
         request = QNetworkRequest(QUrl(url))
-        request.setAttribute(QNetworkRequest.Attribute.CacheLoadControlAttribute,
-                             QNetworkRequest.CacheLoadControl.AlwaysNetwork)
+        request.setAttribute(
+            QNetworkRequest.Attribute.CacheLoadControlAttribute,
+            QNetworkRequest.CacheLoadControl.AlwaysNetwork,
+        )
         request.setTransferTimeout(10_000)
         reply = self._network.get(request)
         self._replies.add(reply)

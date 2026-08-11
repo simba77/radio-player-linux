@@ -38,14 +38,16 @@ def test_parse_daterange_returns_none_without_tag():
 
 
 def test_extract_cover_prefers_300px():
-    body = json.dumps({
-        "current": {
-            "title": "X",
-            "coverImageUrl100": "https://example.org/100.jpg",
-            "coverImageUrl300": "https://example.org/300.jpg",
-            "coverImageUrl600": "https://example.org/600.jpg",
+    body = json.dumps(
+        {
+            "current": {
+                "title": "X",
+                "coverImageUrl100": "https://example.org/100.jpg",
+                "coverImageUrl300": "https://example.org/300.jpg",
+                "coverImageUrl600": "https://example.org/600.jpg",
+            }
         }
-    })
+    )
     assert _extract_cover(body) == "https://example.org/300.jpg"
 
 

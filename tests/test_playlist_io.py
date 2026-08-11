@@ -26,10 +26,20 @@ File2=https://example.org/two.mp3
 Title2=Вторая
 """
 
-MACOS_JSON = json.dumps([
-    {"id": "5F5E1E9A-0000-0000-0000-000000000001", "name": "Lady Waks", "urlString": "https://example.org/lw.m3u8"},
-    {"id": "5F5E1E9A-0000-0000-0000-000000000002", "name": "Main", "urlString": "https://example.org/main.m3u8"},
-])
+MACOS_JSON = json.dumps(
+    [
+        {
+            "id": "5F5E1E9A-0000-0000-0000-000000000001",
+            "name": "Lady Waks",
+            "urlString": "https://example.org/lw.m3u8",
+        },
+        {
+            "id": "5F5E1E9A-0000-0000-0000-000000000002",
+            "name": "Main",
+            "urlString": "https://example.org/main.m3u8",
+        },
+    ]
+)
 
 
 def test_parse_m3u_reads_names_and_urls():
