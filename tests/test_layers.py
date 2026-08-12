@@ -71,12 +71,13 @@ def test_layer_has_files(layer):
 
 @pytest.mark.parametrize("layer", sorted(FORBIDDEN))
 def test_layer_keeps_its_boundaries(layer):
-    violations = []
-    for path in layer_modules(layer):
-        for imported in imports_of(path):
-            for banned in FORBIDDEN[layer]:
-                if imported == banned or imported.startswith(f"{banned}."):
-                    violations.append(f"{path.name} → {imported}")
+    violations = [
+        f"{path.name} → {imported}"
+        for path in layer_modules(layer)
+        for imported in imports_of(path)
+        for banned in FORBIDDEN[layer]
+        if imported == banned or imported.startswith(f"{banned}.")
+    ]
     assert not violations, f"слой {layer} тянет лишнее: {violations}"
 
 

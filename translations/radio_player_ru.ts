@@ -4,67 +4,67 @@
 <context>
     <name>CatalogsTab</name>
     <message>
-        <location filename="../radio_player/ui/settings_dialog.py" line="420"/>
+        <location filename="../radio_player/ui/settings/catalogs.py" line="45"/>
         <source>Add catalog...</source>
         <translation>Добавить каталог...</translation>
     </message>
     <message>
-        <location filename="../radio_player/ui/settings_dialog.py" line="422"/>
+        <location filename="../radio_player/ui/settings/catalogs.py" line="47"/>
         <source>Remove</source>
         <translation>Удалить</translation>
     </message>
     <message>
-        <location filename="../radio_player/ui/settings_dialog.py" line="424"/>
+        <location filename="../radio_player/ui/settings/catalogs.py" line="49"/>
         <source>Update now</source>
         <translation>Обновить сейчас</translation>
     </message>
     <message>
-        <location filename="../radio_player/ui/settings_dialog.py" line="446"/>
+        <location filename="../radio_player/ui/settings/catalogs.py" line="71"/>
         <source>Built-in catalog — cannot be removed</source>
         <translation>Встроенный каталог — удалить нельзя</translation>
     </message>
     <message>
-        <location filename="../radio_player/ui/settings_dialog.py" line="464"/>
+        <location filename="../radio_player/ui/settings/catalogs.py" line="89"/>
         <source>Updating...</source>
         <translation>Обновление...</translation>
     </message>
     <message>
-        <location filename="../radio_player/ui/settings_dialog.py" line="468"/>
+        <location filename="../radio_player/ui/settings/catalogs.py" line="93"/>
         <source>The catalogs have never been updated.</source>
         <translation>Каталоги ещё не обновлялись.</translation>
     </message>
     <message>
-        <location filename="../radio_player/ui/settings_dialog.py" line="470"/>
+        <location filename="../radio_player/ui/settings/catalogs.py" line="95"/>
         <source>Last update: {ago} ago.</source>
         <translation>Последнее обновление: {ago} назад.</translation>
     </message>
     <message>
-        <location filename="../radio_player/ui/settings_dialog.py" line="491"/>
+        <location filename="../radio_player/ui/settings/catalogs.py" line="116"/>
         <source>New catalog</source>
         <translation>Новый каталог</translation>
     </message>
     <message>
-        <location filename="../radio_player/ui/settings_dialog.py" line="493"/>
+        <location filename="../radio_player/ui/settings/catalogs.py" line="118"/>
         <source>Link to a JSON catalog:</source>
         <translation>Ссылка на JSON-каталог:</translation>
     </message>
     <message>
-        <location filename="../radio_player/ui/settings_dialog.py" line="499"/>
+        <location filename="../radio_player/ui/settings/catalogs.py" line="124"/>
         <source>The link must start with https://</source>
         <translation>Ссылка должна начинаться с https://</translation>
     </message>
     <message>
-        <location filename="../radio_player/ui/settings_dialog.py" line="521"/>
+        <location filename="../radio_player/ui/settings/catalogs.py" line="146"/>
         <source>No changes.</source>
         <translation>Изменений нет.</translation>
     </message>
     <message>
-        <location filename="../radio_player/ui/settings_dialog.py" line="482"/>
+        <location filename="../radio_player/ui/settings/catalogs.py" line="107"/>
         <source>less than a minute</source>
         <translation>меньше минуты</translation>
     </message>
     <message numerus="yes">
-        <location filename="../radio_player/ui/settings_dialog.py" line="484"/>
+        <location filename="../radio_player/ui/settings/catalogs.py" line="109"/>
         <source>%n minute(s)</source>
         <translation>
             <numerusform>%n минуту</numerusform>
@@ -73,7 +73,7 @@
         </translation>
     </message>
     <message numerus="yes">
-        <location filename="../radio_player/ui/settings_dialog.py" line="487"/>
+        <location filename="../radio_player/ui/settings/catalogs.py" line="112"/>
         <source>%n hour(s)</source>
         <translation>
             <numerusform>%n час</numerusform>
@@ -82,7 +82,7 @@
         </translation>
     </message>
     <message numerus="yes">
-        <location filename="../radio_player/ui/settings_dialog.py" line="488"/>
+        <location filename="../radio_player/ui/settings/catalogs.py" line="113"/>
         <source>%n day(s)</source>
         <translation>
             <numerusform>%n день</numerusform>
@@ -94,43 +94,44 @@
 <context>
     <name>GeneralTab</name>
     <message>
-        <location filename="../radio_player/ui/settings_dialog.py" line="78"/>
-        <location filename="../radio_player/ui/settings_dialog.py" line="122"/>
+        <location filename="../radio_player/ui/settings/general.py" line="30"/>
+        <location filename="../radio_player/ui/settings/general.py" line="74"/>
         <source>Start at login</source>
+        <extracomment>Названия языков не переводятся: каждый пишется на себе самом.</extracomment>
         <translation>Запускать при входе в систему</translation>
     </message>
     <message>
-        <location filename="../radio_player/ui/settings_dialog.py" line="82"/>
+        <location filename="../radio_player/ui/settings/general.py" line="34"/>
         <source>Closing the window hides it in the tray</source>
         <translation>Закрытие окна сворачивает в трей</translation>
     </message>
     <message>
-        <location filename="../radio_player/ui/settings_dialog.py" line="89"/>
+        <location filename="../radio_player/ui/settings/general.py" line="41"/>
         <source> h</source>
         <translation> ч</translation>
     </message>
     <message>
-        <location filename="../radio_player/ui/settings_dialog.py" line="93"/>
+        <location filename="../radio_player/ui/settings/general.py" line="45"/>
         <source>System</source>
         <translation>Системный</translation>
     </message>
     <message>
-        <location filename="../radio_player/ui/settings_dialog.py" line="99"/>
+        <location filename="../radio_player/ui/settings/general.py" line="51"/>
         <source>The language will change after a restart.</source>
         <translation>Язык изменится после перезапуска.</translation>
     </message>
     <message>
-        <location filename="../radio_player/ui/settings_dialog.py" line="106"/>
+        <location filename="../radio_player/ui/settings/general.py" line="58"/>
         <source>Update catalogs every</source>
         <translation>Обновлять каталоги каждые</translation>
     </message>
     <message>
-        <location filename="../radio_player/ui/settings_dialog.py" line="107"/>
+        <location filename="../radio_player/ui/settings/general.py" line="59"/>
         <source>Interface language</source>
         <translation>Язык интерфейса</translation>
     </message>
     <message>
-        <location filename="../radio_player/ui/settings_dialog.py" line="122"/>
+        <location filename="../radio_player/ui/settings/general.py" line="74"/>
         <source>Could not change the startup setting.</source>
         <translation>Не удалось изменить настройку автозапуска.</translation>
     </message>
@@ -216,23 +217,22 @@
 <context>
     <name>SettingsDialog</name>
     <message>
-        <location filename="../radio_player/ui/settings_dialog.py" line="61"/>
+        <location filename="../radio_player/ui/settings/dialog.py" line="28"/>
         <source>Settings</source>
-        <extracomment>Роль Qt для хранения id станции в строке списка. Названия языков не переводятся: каждый пишется на себе самом.</extracomment>
         <translation>Настройки</translation>
     </message>
     <message>
-        <location filename="../radio_player/ui/settings_dialog.py" line="65"/>
+        <location filename="../radio_player/ui/settings/dialog.py" line="32"/>
         <source>General</source>
         <translation>Основные</translation>
     </message>
     <message>
-        <location filename="../radio_player/ui/settings_dialog.py" line="66"/>
+        <location filename="../radio_player/ui/settings/dialog.py" line="33"/>
         <source>Stations</source>
         <translation>Станции</translation>
     </message>
     <message>
-        <location filename="../radio_player/ui/settings_dialog.py" line="67"/>
+        <location filename="../radio_player/ui/settings/dialog.py" line="34"/>
         <source>Catalogs</source>
         <translation>Каталоги</translation>
     </message>
@@ -249,32 +249,33 @@
 <context>
     <name>StationDialog</name>
     <message>
-        <location filename="../radio_player/ui/settings_dialog.py" line="147"/>
+        <location filename="../radio_player/ui/settings/stations.py" line="46"/>
         <source>New station</source>
+        <extracomment>Роль Qt для хранения id станции в строке списка.</extracomment>
         <translation>Новая станция</translation>
     </message>
     <message>
-        <location filename="../radio_player/ui/settings_dialog.py" line="151"/>
+        <location filename="../radio_player/ui/settings/stations.py" line="50"/>
         <source>Station name</source>
         <translation>Название станции</translation>
     </message>
     <message>
-        <location filename="../radio_player/ui/settings_dialog.py" line="172"/>
+        <location filename="../radio_player/ui/settings/stations.py" line="71"/>
         <source>Name:</source>
         <translation>Название:</translation>
     </message>
     <message>
-        <location filename="../radio_player/ui/settings_dialog.py" line="173"/>
+        <location filename="../radio_player/ui/settings/stations.py" line="72"/>
         <source>Stream URL:</source>
         <translation>Адрес потока:</translation>
     </message>
     <message>
-        <location filename="../radio_player/ui/settings_dialog.py" line="191"/>
+        <location filename="../radio_player/ui/settings/stations.py" line="90"/>
         <source>The URL must start with http:// or https://</source>
         <translation>Адрес должен начинаться с http:// или https://</translation>
     </message>
     <message>
-        <location filename="../radio_player/ui/settings_dialog.py" line="195"/>
+        <location filename="../radio_player/ui/settings/stations.py" line="94"/>
         <source>A direct stream URL or an HLS playlist (.m3u8).</source>
         <translation>Прямой адрес потока или HLS-плейлист (.m3u8).</translation>
     </message>
@@ -282,80 +283,80 @@
 <context>
     <name>StationsTab</name>
     <message>
-        <location filename="../radio_player/ui/settings_dialog.py" line="216"/>
+        <location filename="../radio_player/ui/settings/stations.py" line="115"/>
         <source>Add...</source>
         <translation>Добавить...</translation>
     </message>
     <message>
-        <location filename="../radio_player/ui/settings_dialog.py" line="218"/>
+        <location filename="../radio_player/ui/settings/stations.py" line="117"/>
         <source>Duplicate</source>
         <translation>Сделать копию</translation>
     </message>
     <message>
-        <location filename="../radio_player/ui/settings_dialog.py" line="220"/>
+        <location filename="../radio_player/ui/settings/stations.py" line="119"/>
         <source>Creates your own copy of a catalog station — its stream URL can be edited</source>
         <translation>Создаёт вашу копию станции каталога — у копии можно менять адрес потока</translation>
     </message>
     <message>
-        <location filename="../radio_player/ui/settings_dialog.py" line="223"/>
-        <location filename="../radio_player/ui/settings_dialog.py" line="347"/>
+        <location filename="../radio_player/ui/settings/stations.py" line="122"/>
+        <location filename="../radio_player/ui/settings/stations.py" line="246"/>
         <source>Remove</source>
         <translation>Удалить</translation>
     </message>
     <message>
-        <location filename="../radio_player/ui/settings_dialog.py" line="225"/>
+        <location filename="../radio_player/ui/settings/stations.py" line="124"/>
         <source>Import...</source>
         <translation>Импорт...</translation>
     </message>
     <message>
-        <location filename="../radio_player/ui/settings_dialog.py" line="227"/>
+        <location filename="../radio_player/ui/settings/stations.py" line="126"/>
         <source>Export...</source>
         <translation>Экспорт...</translation>
     </message>
     <message>
-        <location filename="../radio_player/ui/settings_dialog.py" line="229"/>
-        <location filename="../radio_player/ui/settings_dialog.py" line="392"/>
+        <location filename="../radio_player/ui/settings/stations.py" line="128"/>
+        <location filename="../radio_player/ui/settings/stations.py" line="291"/>
         <source>Reset</source>
         <translation>Сбросить</translation>
     </message>
     <message>
-        <location filename="../radio_player/ui/settings_dialog.py" line="230"/>
+        <location filename="../radio_player/ui/settings/stations.py" line="129"/>
         <source>Return the list to the catalog state</source>
         <translation>Вернуть список к состоянию каталогов</translation>
     </message>
     <message>
-        <location filename="../radio_player/ui/settings_dialog.py" line="242"/>
+        <location filename="../radio_player/ui/settings/stations.py" line="141"/>
         <source>Uncheck a station to hide it. Rename with a double click, reorder by dragging.</source>
         <translation>Снимите галочку, чтобы скрыть станцию. Название можно изменить двойным щелчком, порядок — перетаскиванием.</translation>
     </message>
     <message>
-        <location filename="../radio_player/ui/settings_dialog.py" line="348"/>
+        <location filename="../radio_player/ui/settings/stations.py" line="247"/>
         <source>Remove the station «{name}»?</source>
         <translation>Удалить станцию «{name}»?</translation>
     </message>
     <message>
-        <location filename="../radio_player/ui/settings_dialog.py" line="356"/>
+        <location filename="../radio_player/ui/settings/stations.py" line="255"/>
         <source>Import stations</source>
         <translation>Импорт станций</translation>
     </message>
     <message>
-        <location filename="../radio_player/ui/settings_dialog.py" line="358"/>
+        <location filename="../radio_player/ui/settings/stations.py" line="257"/>
         <source>Playlists (*.m3u *.m3u8 *.pls *.json);;All files (*)</source>
         <translation>Плейлисты (*.m3u *.m3u8 *.pls *.json);;Все файлы (*)</translation>
     </message>
     <message>
-        <location filename="../radio_player/ui/settings_dialog.py" line="364"/>
-        <location filename="../radio_player/ui/settings_dialog.py" line="370"/>
+        <location filename="../radio_player/ui/settings/stations.py" line="263"/>
+        <location filename="../radio_player/ui/settings/stations.py" line="269"/>
         <source>Import</source>
         <translation>Импорт</translation>
     </message>
     <message>
-        <location filename="../radio_player/ui/settings_dialog.py" line="364"/>
+        <location filename="../radio_player/ui/settings/stations.py" line="263"/>
         <source>No stations were found in the file.</source>
         <translation>В файле не нашлось станций.</translation>
     </message>
     <message numerus="yes">
-        <location filename="../radio_player/ui/settings_dialog.py" line="371"/>
+        <location filename="../radio_player/ui/settings/stations.py" line="270"/>
         <source>%n station(s) added.</source>
         <translation>
             <numerusform>Добавлена %n станция.</numerusform>
@@ -364,27 +365,27 @@
         </translation>
     </message>
     <message>
-        <location filename="../radio_player/ui/settings_dialog.py" line="376"/>
+        <location filename="../radio_player/ui/settings/stations.py" line="275"/>
         <source>Export stations</source>
         <translation>Экспорт станций</translation>
     </message>
     <message>
-        <location filename="../radio_player/ui/settings_dialog.py" line="376"/>
+        <location filename="../radio_player/ui/settings/stations.py" line="275"/>
         <source>Playlist (*.m3u)</source>
         <translation>Плейлист (*.m3u)</translation>
     </message>
     <message>
-        <location filename="../radio_player/ui/settings_dialog.py" line="385"/>
+        <location filename="../radio_player/ui/settings/stations.py" line="284"/>
         <source>Export</source>
         <translation>Экспорт</translation>
     </message>
     <message>
-        <location filename="../radio_player/ui/settings_dialog.py" line="386"/>
+        <location filename="../radio_player/ui/settings/stations.py" line="285"/>
         <source>Could not save the file: {error}</source>
         <translation>Не удалось сохранить файл: {error}</translation>
     </message>
     <message>
-        <location filename="../radio_player/ui/settings_dialog.py" line="393"/>
+        <location filename="../radio_player/ui/settings/stations.py" line="292"/>
         <source>Return the station list to the catalog state? Your edits will be lost.</source>
         <translation>Вернуть список станций к состоянию каталогов? Ваши правки будут потеряны.</translation>
     </message>

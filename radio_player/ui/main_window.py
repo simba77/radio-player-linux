@@ -24,7 +24,7 @@ from ..core.settings_store import SettingsStore
 from ..core.station_store import StationStore
 from ..playback.player import PlayerManager
 from . import icons
-from .settings_dialog import SettingsDialog
+from .settings import SettingsDialog
 from .widgets import NowPlayingWidget
 
 #: Роль Qt (`Qt.UserRole`) для хранения id станции в элементе списка.

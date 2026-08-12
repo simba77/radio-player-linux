@@ -1,4 +1,4 @@
-"""Окно настроек: основные параметры, станции и каталоги."""
+"""Вкладка «Станции»: видимость, названия, порядок, свои станции, импорт."""
 
 from __future__ import annotations
 
@@ -10,127 +10,26 @@ from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QPalette
 from PySide6.QtWidgets import (
     QAbstractItemView,
-    QCheckBox,
-    QComboBox,
     QDialog,
     QDialogButtonBox,
     QFileDialog,
     QFormLayout,
     QHBoxLayout,
-    QInputDialog,
     QLabel,
     QLineEdit,
     QListWidget,
     QListWidgetItem,
     QMessageBox,
     QPushButton,
-    QSpinBox,
-    QTabWidget,
     QVBoxLayout,
     QWidget,
 )
 
-from .. import i18n
-from ..core import catalog, playlist_io
-from ..core.models import Catalog
-from ..core.settings import MAX_UPDATE_INTERVAL_HOURS, MIN_UPDATE_INTERVAL_HOURS
-from ..core.settings_store import SettingsStore
-from ..core.station_store import StationStore
-from ..desktop import autostart
+from ...core import playlist_io
+from ...core.station_store import StationStore
 
 #: Роль Qt для хранения id станции в строке списка.
 _STATION_ID_ROLE = int(Qt.ItemDataRole.UserRole)
-
-#: Названия языков не переводятся: каждый пишется на себе самом.
-_LANGUAGE_NAMES = {"en": "English", "ru": "Русский"}
-
-
-class SettingsDialog(QDialog):
-    def __init__(
-        self,
-        store: StationStore,
-        settings: SettingsStore,
-        updater: catalog.CatalogUpdater,
-        parent: QWidget | None = None,
-    ) -> None:
-        super().__init__(parent)
-        self._store = store
-        self._settings = settings
-        self._updater = updater
-
-        self.setWindowTitle(self.tr("Settings"))
-        self.resize(460, 460)
-
-        tabs = QTabWidget()
-        tabs.addTab(GeneralTab(settings), self.tr("General"))
-        tabs.addTab(StationsTab(store), self.tr("Stations"))
-        tabs.addTab(CatalogsTab(settings, updater), self.tr("Catalogs"))
-
-        layout = QVBoxLayout(self)
-        layout.addWidget(tabs)
-
-
-class GeneralTab(QWidget):
-    def __init__(self, settings: SettingsStore, parent: QWidget | None = None) -> None:
-        super().__init__(parent)
-        self._settings = settings
-
-        self._autostart = QCheckBox(self.tr("Start at login"))
-        self._autostart.setChecked(autostart.is_enabled())
-        self._autostart.toggled.connect(self._on_autostart_toggled)
-
-        self._close_to_tray = QCheckBox(self.tr("Closing the window hides it in the tray"))
-        self._close_to_tray.setChecked(settings.close_to_tray)
-        self._close_to_tray.toggled.connect(self._on_close_to_tray_toggled)
-
-        self._interval = QSpinBox()
-        self._interval.setRange(MIN_UPDATE_INTERVAL_HOURS, MAX_UPDATE_INTERVAL_HOURS)
-        self._interval.setValue(settings.update_interval_hours)
-        self._interval.setSuffix(self.tr(" h"))
-        self._interval.valueChanged.connect(self._on_interval_changed)
-
-        self._language = QComboBox()
-        self._language.addItem(self.tr("System"), i18n.AUTO)
-        for code in i18n.LANGUAGES:
-            self._language.addItem(_LANGUAGE_NAMES[code], code)
-        self._language.setCurrentIndex(max(0, self._language.findData(settings.language)))
-        self._language.currentIndexChanged.connect(self._on_language_changed)
-
-        self._language_hint = QLabel(self.tr("The language will change after a restart."))
-        self._language_hint.setWordWrap(True)
-        self._language_hint.hide()
-
-        form = QFormLayout()
-        form.addRow(self._autostart)
-        form.addRow(self._close_to_tray)
-        form.addRow(self.tr("Update catalogs every"), self._interval)
-        form.addRow(self.tr("Interface language"), self._language)
-        form.addRow("", self._language_hint)
-
-        layout = QVBoxLayout(self)
-        layout.addLayout(form)
-        layout.addStretch()
-
-    def _on_autostart_toggled(self, enabled: bool) -> None:
-        actual = autostart.set_enabled(enabled)
-        if actual == enabled:
-            return
-        # Не удалось записать `.desktop` — возвращаем флажок к правде.
-        self._autostart.blockSignals(True)
-        self._autostart.setChecked(actual)
-        self._autostart.blockSignals(False)
-        QMessageBox.warning(self, self.tr("Start at login"), self.tr("Could not change the startup setting."))
-
-    def _on_close_to_tray_toggled(self, enabled: bool) -> None:
-        self._settings.set_close_to_tray(enabled)
-
-    def _on_interval_changed(self, hours: int) -> None:
-        self._settings.set_update_interval_hours(hours)
-
-    def _on_language_changed(self) -> None:
-        self._settings.set_language(self._language.currentData())
-        # Перерисовать уже собранный интерфейс нечем — предупреждаем честно.
-        self._language_hint.show()
 
 
 class StationDialog(QDialog):
@@ -394,128 +293,3 @@ class StationsTab(QWidget):
         )
         if confirm == QMessageBox.StandardButton.Yes:
             self._store.reset()
-
-
-class CatalogsTab(QWidget):
-    """Источники станций и их обновление."""
-
-    def __init__(
-        self,
-        settings: SettingsStore,
-        updater: catalog.CatalogUpdater,
-        parent: QWidget | None = None,
-    ) -> None:
-        super().__init__(parent)
-        self._settings = settings
-        self._updater = updater
-
-        self._list = QListWidget()
-        # Ссылки длинные: сокращаем их посередине вместо горизонтальной прокрутки,
-        # полный адрес остаётся в подсказке.
-        self._list.setTextElideMode(Qt.TextElideMode.ElideMiddle)
-        self._list.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        self._status = QLabel()
-        self._status.setWordWrap(True)
-
-        self._add_button = QPushButton(self.tr("Add catalog..."))
-        self._add_button.clicked.connect(self._add_catalog)
-        self._remove_button = QPushButton(self.tr("Remove"))
-        self._remove_button.clicked.connect(self._remove_catalog)
-        self._update_button = QPushButton(self.tr("Update now"))
-        self._update_button.clicked.connect(self._update_now)
-
-        buttons = QHBoxLayout()
-        buttons.addWidget(self._add_button)
-        buttons.addWidget(self._remove_button)
-        buttons.addStretch()
-        buttons.addWidget(self._update_button)
-
-        layout = QVBoxLayout(self)
-        layout.addWidget(self._list, 1)
-        layout.addLayout(buttons)
-        layout.addWidget(self._status)
-
-        updater.finished.connect(self._on_update_finished)
-        self._list.itemSelectionChanged.connect(self._update_buttons)
-        self._reload()
-
-    def _reload(self) -> None:
-        self._list.clear()
-        for url in catalog.DEFAULT_CATALOG_URLS:
-            item = QListWidgetItem(url)
-            item.setToolTip(f"{url}\n\n" + self.tr("Built-in catalog — cannot be removed"))
-            item.setFlags(Qt.ItemFlag.ItemIsEnabled)
-            self._list.addItem(item)
-        for url in self._settings.extra_catalog_urls:
-            item = QListWidgetItem(url)
-            item.setToolTip(url)
-            self._list.addItem(item)
-        self._update_status()
-        self._update_buttons()
-
-    def _update_buttons(self) -> None:
-        item = self._list.currentItem()
-        is_extra = item is not None and item.text() in self._settings.extra_catalog_urls
-        self._remove_button.setEnabled(is_extra)
-        self._update_button.setEnabled(not self._updater.is_running)
-
-    def _update_status(self) -> None:
-        if self._updater.is_running:
-            self._status.setText(self.tr("Updating..."))
-            return
-        elapsed = catalog.seconds_since_update()
-        if elapsed is None:
-            self._status.setText(self.tr("The catalogs have never been updated."))
-        else:
-            self._status.setText(self.tr("Last update: {ago} ago.").format(ago=self._humanize(elapsed)))
-
-    def _humanize(self, seconds: float) -> str:
-        """Прошедшее время словами. Формы числа расставляет Qt по правилам языка.
-
-        Метод, а не функция модуля: формы множественного числа lupdate узнаёт
-        только по `self.tr(source, disambiguation, n)` — у
-        `QCoreApplication.translate()` с тем же `n` он их не видит и молча
-        сводит сообщение к одной форме.
-        """
-        minutes = int(seconds // 60)
-        if minutes < 1:
-            return self.tr("less than a minute")
-        if minutes < 60:
-            return self.tr("%n minute(s)", "", minutes)
-        hours = minutes // 60
-        if hours < 24:
-            return self.tr("%n hour(s)", "", hours)
-        return self.tr("%n day(s)", "", hours // 24)
-
-    def _add_catalog(self) -> None:
-        title = self.tr("New catalog")
-        url, ok = QInputDialog.getText(
-            self, title, self.tr("Link to a JSON catalog:"), QLineEdit.EchoMode.Normal, "https://"
-        )
-        url = url.strip()
-        if not ok or not url:
-            return
-        if not url.lower().startswith("https://"):
-            QMessageBox.warning(self, title, self.tr("The link must start with https://"))
-            return
-        if url in catalog.DEFAULT_CATALOG_URLS or not self._settings.add_catalog_url(url):
-            return
-        self._reload()
-        # Добавленный каталог нужен пользователю сейчас, а не после перезапуска.
-        self._update_now()
-
-    def _remove_catalog(self) -> None:
-        item = self._list.currentItem()
-        if item is not None and self._settings.remove_catalog_url(item.text()):
-            self._reload()
-
-    def _update_now(self) -> None:
-        self._updater.update_now()
-        self._update_status()
-        self._update_buttons()
-
-    def _on_update_finished(self, _catalogs: list[Catalog], changed: bool) -> None:
-        self._update_status()
-        self._update_buttons()
-        if not changed:
-            self._status.setText(self._status.text() + " " + self.tr("No changes."))
