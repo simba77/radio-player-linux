@@ -15,6 +15,8 @@ gnome-settings-daemon не смотрят на активный плеер. Бе
 
 from __future__ import annotations
 
+import logging
+
 from PySide6.QtCore import Q_ARG, QCoreApplication, QMetaObject, QObject, Slot
 from PySide6.QtDBus import QDBusConnection, QDBusInterface, QDBusMessage, QDBusPendingCallWatcher
 
@@ -27,6 +29,8 @@ _INTERFACE = "org.freedesktop.PowerManagement.Inhibit"
 
 #: Служба локальная, отвечает мгновенно; долго ждать её незачем.
 _CALL_TIMEOUT_MS = 3000
+
+_log = logging.getLogger(__name__)
 
 
 class SleepInhibitor(QObject):
@@ -148,4 +152,4 @@ class SleepInhibitor(QObject):
         if self._warned:
             return
         self._warned = True
-        print(f"Запрет засыпания недоступен ({message}) — система может заснуть во время эфира.")
+        _log.warning("Запрет засыпания недоступен (%s) — система может заснуть во время эфира.", message)

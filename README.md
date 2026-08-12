@@ -58,6 +58,9 @@ sudo apt install libmpv2 python3-mpv \
 make run
 ```
 
+Diagnostics go to stderr, so a desktop launch lands in the journal. To see more,
+run `radio-player --log-level debug`; `--version` prints the version.
+
 ## Development
 
 ```bash

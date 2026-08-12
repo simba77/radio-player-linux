@@ -2,13 +2,15 @@
 
 from __future__ import annotations
 
+import argparse
+import logging
 import signal
 import sys
 
 from PySide6.QtCore import QTimer
 from PySide6.QtWidgets import QApplication, QSystemTrayIcon
 
-from . import APP_NAME, APP_RDNS_ID, APP_VERSION, catalog, i18n, paths
+from . import APP_ID, APP_NAME, APP_RDNS_ID, APP_VERSION, catalog, i18n, paths
 from .mpris import MprisServer
 from .network import install_network_monitor
 from .player import PlayerManager
@@ -22,10 +24,16 @@ from .ui.tray import TrayIcon
 #: Задержка перед фоновым обновлением каталогов, чтобы не тормозить запуск.
 _CATALOG_UPDATE_DELAY_MS = 2000
 
+_log = logging.getLogger(__name__)
 
-def main() -> int:
+
+def main(argv: list[str] | None = None) -> int:
+    argv = sys.argv if argv is None else argv
+    args, qt_argv = parse_args(argv)
+    _setup_logging(args.log_level)
+
     if notify_running_instance():
-        print(f"{APP_NAME} уже запущен — показали окно существующего экземпляра.")
+        _log.info("%s уже запущен — показали окно существующего экземпляра.", APP_NAME)
         return 0
 
     paths.ensure_dirs()
@@ -35,7 +43,7 @@ def main() -> int:
     # приложения, и позже его уже не сменить.
     i18n.prepare(settings.language)
 
-    app = QApplication(sys.argv)
+    app = QApplication(qt_argv)
     app.setApplicationName(APP_NAME)
     app.setApplicationVersion(APP_VERSION)
     # Имя `.desktop`-файла: по нему Wayland связывает окно с иконкой приложения.
@@ -69,7 +77,7 @@ def main() -> int:
         tray.show()
     else:
         # Без лотка (например, GNOME без AppIndicator) прятать окно некуда.
-        print("Системный лоток недоступен — работаем только окном.")
+        _log.warning("Системный лоток недоступен — работаем только окном.")
         app.setQuitOnLastWindowClosed(True)
         window.allow_close()
 
@@ -85,7 +93,7 @@ def main() -> int:
         app.aboutToQuit.connect(mpris.unregister)
     else:
         # Без MPRIS остаются окно и трей — медиаклавиши просто не работают.
-        print("MPRIS недоступен: медиаклавиши и виджет плеера работать не будут.")
+        _log.warning("MPRIS недоступен: медиаклавиши и виджет плеера работать не будут.")
 
     _schedule_catalog_update(updater, settings)
     app.aboutToQuit.connect(updater.cancel)
@@ -99,6 +107,38 @@ def main() -> int:
     wakeup.timeout.connect(lambda: None)
 
     return app.exec()
+
+
+def parse_args(argv: list[str]) -> tuple[argparse.Namespace, list[str]]:
+    """Разбирает свои аргументы, остальные оставляет Qt.
+
+    У Qt свой набор ключей (`-platform`, `-style`), и перечислять их у себя
+    нельзя — они меняются от версии к версии. Поэтому неизвестные аргументы
+    не ошибка, а то, что уходит в `QApplication`.
+    """
+    parser = argparse.ArgumentParser(
+        prog=APP_ID,
+        description="Плеер интернет-радио: трей, MPRIS, HLS и прямые потоки.",
+    )
+    parser.add_argument("--version", action="version", version=f"{APP_ID} {APP_VERSION}")
+    parser.add_argument(
+        "--log-level",
+        default="info",
+        choices=("debug", "info", "warning", "error"),
+        help="сколько писать в stderr (по умолчанию info)",
+    )
+    args, unknown = parser.parse_known_args(argv[1:])
+    return args, [argv[0], *unknown]
+
+
+def _setup_logging(level: str) -> None:
+    # В stderr, а не в stdout: при запуске из `.desktop` вывод забирает journald,
+    # и диагностика не должна смешиваться с обычным выводом программы.
+    logging.basicConfig(
+        stream=sys.stderr,
+        level=getattr(logging, level.upper()),
+        format="%(levelname)s: %(message)s",
+    )
 
 
 def wire_catalog_sources(
