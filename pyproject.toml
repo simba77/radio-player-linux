@@ -80,6 +80,20 @@ extend-ignore-names = ["closeEvent", "mousePressEvent", "visit_*"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 
+[tool.coverage.run]
+source = ["radio_player"]
+# Точка входа собирает приложение целиком и требует шины, лотка и звука:
+# её покрывают smoke-проверки, а не модульные тесты.
+omit = ["radio_player/__main__.py"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+# Планка держит уровень, а не гонится за цифрой: она ниже текущего покрытия,
+# чтобы обычная правка не красила сборку, но не даёт ему просесть.
+fail_under = 75
+exclude_also = ["if TYPE_CHECKING:", "raise NotImplementedError"]
+
 [tool.mypy]
 python_version = "3.12"
 files = ["radio_player"]

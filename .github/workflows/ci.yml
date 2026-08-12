@@ -44,9 +44,10 @@ jobs:
       - name: Typecheck
         run: make typecheck
 
-      # Сюда же входит проверка каталога переводов на дрейф от кода.
+      # Сюда же входит проверка каталога переводов на дрейф от кода
+      # и порог покрытия.
       - name: Test
-        run: make test
+        run: make coverage
 
       - name: Validate the desktop entry and AppStream data
         run: |

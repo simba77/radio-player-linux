@@ -18,7 +18,7 @@ LUPDATE ?= $(shell command -v pyside6-lupdate 2>/dev/null || echo /usr/lib/qt6/b
 LANGUAGES := ru en
 SCANNED_LANGUAGES := ru
 
-.PHONY: help run probe deps deps-i18n devenv check lint format typecheck test icons i18n-update i18n-release install uninstall deb clean
+.PHONY: help run probe deps deps-i18n devenv check lint format typecheck test coverage icons i18n-update i18n-release install uninstall deb clean
 
 help:
 	@echo "make deps      — установить системные зависимости (нужен sudo)"
@@ -31,6 +31,7 @@ help:
 	@echo "make typecheck — mypy"
 	@echo "make format    — отформатировать код и починить, что чинится само"
 	@echo "make test      — pytest"
+	@echo "make coverage  — pytest с измерением покрытия"
 	@echo "make i18n-update  — обновить .ts новыми строками из кода"
 	@echo "make i18n-release — собрать .qm из .ts"
 	@echo "make install   — установить в $(PREFIX)"
@@ -73,6 +74,9 @@ typecheck: $(VENV_PY)
 
 test: $(VENV_PY)
 	$(VENV_PY) -m pytest
+
+coverage: $(VENV_PY)
+	$(VENV_PY) -m pytest --cov --cov-report=term
 
 $(VENV_PY):
 	$(MAKE) devenv

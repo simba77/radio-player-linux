@@ -6,5 +6,6 @@
 # Приложению эти пакеты не нужны: PySide6 и python-mpv приходят из системы,
 # поэтому .venv и создаётся с --system-site-packages.
 pytest==9.1.1
+pytest-cov==7.1.0
 ruff==0.16.2
 mypy==2.3.0
