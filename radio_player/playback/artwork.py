@@ -6,10 +6,12 @@
 
 from __future__ import annotations
 
+import contextlib
 import hashlib
+import logging
 from pathlib import Path
 
-from PySide6.QtCore import QObject, QUrl, Signal
+from PySide6.QtCore import QObject, QTimer, QUrl, Signal
 from PySide6.QtGui import QImage
 from PySide6.QtNetwork import QNetworkAccessManager, QNetworkReply, QNetworkRequest
 
@@ -17,6 +19,13 @@ from ..core import paths
 
 #: Обложки крупнее не нужны: 300×300 — максимум, что просит UI.
 _MAX_BYTES = 2 * 1024 * 1024
+#: Потолок кэша на диске. Радио меняет трек раз в несколько минут, то есть
+#: сотни обложек в сутки непрерывного эфира: без потолка каталог рос бы вечно.
+MAX_CACHE_BYTES = 64 * 1024 * 1024
+#: Уборка после запуска, а не во время: старт важнее.
+_PRUNE_DELAY_MS = 5000
+
+_log = logging.getLogger(__name__)
 
 
 class ArtworkLoader(QObject):
@@ -30,6 +39,7 @@ class ArtworkLoader(QObject):
         self._network = QNetworkAccessManager(self)
         self._dir = paths.artwork_cache_dir()
         self._pending: dict[str, QNetworkReply] = {}
+        QTimer.singleShot(_PRUNE_DELAY_MS, self._prune)
 
     def load(self, url: str) -> None:
         if not url or url in self._pending:
@@ -81,9 +91,46 @@ class ArtworkLoader(QObject):
 
         self.artwork_ready.emit(url, str(path), image)
 
+    def _prune(self) -> None:
+        removed = prune_cache(self._dir, MAX_CACHE_BYTES)
+        if removed:
+            _log.debug("Кэш обложек: удалено %s файлов", removed)
+
     def _cache_path(self, url: str) -> Path:
         # Хеш здесь — способ превратить адрес в имя файла, а не защита:
         # подделывать его некому, коллизия стоит одной перерисованной обложки.
         digest = hashlib.sha1(url.encode(), usedforsecurity=False).hexdigest()
         suffix = ".webp" if url.split("?", 1)[0].endswith(".webp") else ".jpg"
         return self._dir / f"{digest}{suffix}"
+
+
+def prune_cache(directory: Path, max_bytes: int) -> int:
+    """Удаляет самые старые обложки, пока кэш не уложится в лимит.
+
+    Возвращает число удалённых файлов. Кэш расходный: потерянная обложка стоит
+    одного запроса к сети, поэтому любые ошибки доступа здесь просто молчат.
+    """
+    try:
+        entries = [
+            (entry.stat().st_mtime, entry.stat().st_size, entry)
+            for entry in directory.iterdir()
+            if entry.is_file()
+        ]
+    except OSError:
+        return 0
+
+    total = sum(size for _, size, _ in entries)
+    if total <= max_bytes:
+        return 0
+
+    removed = 0
+    # Сначала самые старые: недавние обложки ещё нужны — их показывает окно
+    # и отдаёт MPRIS.
+    for _, size, entry in sorted(entries):
+        if total <= max_bytes:
+            break
+        with contextlib.suppress(OSError):
+            entry.unlink()
+            total -= size
+            removed += 1
+    return removed
