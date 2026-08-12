@@ -7,8 +7,11 @@
 
 from __future__ import annotations
 
+import os
+
 import pytest
 
+from radio_player.core import paths
 from radio_player.desktop import single_instance
 
 pytestmark = pytest.mark.usefixtures("qt_app")
@@ -49,7 +52,7 @@ def test_no_token_outside_a_session(monkeypatch):
 
 def test_second_launch_hands_the_token_to_the_first(monkeypatch, tmp_path):
     """Полный круг: сервер слушает, второй экземпляр стучится, токен доходит."""
-    monkeypatch.setattr(single_instance, "IPC_SOCKET_NAME", str(tmp_path / "test.socket"))
+    monkeypatch.setenv("XDG_RUNTIME_DIR", str(tmp_path))
     monkeypatch.setenv("XDG_ACTIVATION_TOKEN", TOKEN)
 
     received: list[str] = []
@@ -68,5 +71,17 @@ def test_second_launch_hands_the_token_to_the_first(monkeypatch, tmp_path):
 
 
 def test_nothing_answers_when_no_instance_runs(monkeypatch, tmp_path):
-    monkeypatch.setattr(single_instance, "IPC_SOCKET_NAME", str(tmp_path / "missing.socket"))
+    monkeypatch.setenv("XDG_RUNTIME_DIR", str(tmp_path))
     assert single_instance.notify_running_instance() is False
+
+
+def test_socket_lives_in_the_runtime_directory(monkeypatch, tmp_path):
+    """В общем /tmp сокет был бы один на всю машину: второй пользователь,
+    запустив приложение, поднимал бы окно первому."""
+    monkeypatch.setenv("XDG_RUNTIME_DIR", str(tmp_path))
+    assert paths.ipc_socket().parent == tmp_path
+
+
+def test_socket_falls_back_per_user(monkeypatch):
+    monkeypatch.delenv("XDG_RUNTIME_DIR", raising=False)
+    assert str(os.getuid()) in str(paths.ipc_socket())

@@ -70,6 +70,9 @@ make format  # apply ruff format and the fixes ruff can make itself
 make probe   # inspect metadata of a live stream
 ```
 
+Optionally `pip install pre-commit && pre-commit install` runs the same lint and format checks
+before each commit.
+
 ### Translations
 
 Interface strings are English literals in the source, translated with Qt Linguist. After adding

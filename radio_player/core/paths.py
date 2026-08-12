@@ -48,6 +48,20 @@ def artwork_cache_dir() -> Path:
     return cache_dir() / "artwork"
 
 
+def ipc_socket() -> Path:
+    """Сокет single-instance.
+
+    В `$XDG_RUNTIME_DIR`, а не в общем `/tmp`, куда `QLocalServer` кладёт сокет
+    по короткому имени: там он один на всю машину, и второй пользователь,
+    запустив приложение, поднимал бы окно первому. Запасной путь тоже разведён
+    по uid — на случай сеанса без runtime-каталога.
+    """
+    runtime = os.environ.get("XDG_RUNTIME_DIR")
+    root = Path(runtime) if runtime else Path(f"/tmp/{APP_ID}-{os.getuid()}")  # noqa: S108
+    root.mkdir(parents=True, exist_ok=True)
+    return root / f"{APP_ID}.socket"
+
+
 def autostart_file() -> Path:
     """`.desktop`-файл автозапуска (аналог SMAppService на macOS)."""
     return _autostart_dir() / f"{APP_RDNS_ID}.desktop"

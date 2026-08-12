@@ -18,7 +18,7 @@ from collections.abc import Callable
 from PySide6.QtCore import QObject
 from PySide6.QtNetwork import QLocalServer, QLocalSocket
 
-from .. import IPC_SOCKET_NAME
+from ..core import paths
 
 #: Команда второго экземпляра: показать окно, вот токен активации (может быть пуст).
 _SHOW_COMMAND = "show"
@@ -37,7 +37,7 @@ def notify_running_instance() -> bool:
     текущий процесс должен молча завершиться.
     """
     socket = QLocalSocket()
-    socket.connectToServer(IPC_SOCKET_NAME)
+    socket.connectToServer(str(paths.ipc_socket()))
     if not socket.waitForConnected(_CONNECT_TIMEOUT_MS):
         return False
     socket.write(encode_request(activation_token()))
@@ -69,9 +69,9 @@ class InstanceServer(QObject):
         self._on_show_requested = on_show_requested
         self._server = QLocalServer(self)
         # Осиротевший сокет остаётся после аварийного завершения и блокирует listen().
-        QLocalServer.removeServer(IPC_SOCKET_NAME)
+        QLocalServer.removeServer(str(paths.ipc_socket()))
         self._server.newConnection.connect(self._handle_connection)
-        self._server.listen(IPC_SOCKET_NAME)
+        self._server.listen(str(paths.ipc_socket()))
 
     def _handle_connection(self) -> None:
         connection = self._server.nextPendingConnection()
@@ -90,4 +90,4 @@ class InstanceServer(QObject):
 
     def close(self) -> None:
         self._server.close()
-        QLocalServer.removeServer(IPC_SOCKET_NAME)
+        QLocalServer.removeServer(str(paths.ipc_socket()))

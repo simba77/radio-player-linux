@@ -101,8 +101,12 @@ def main(argv: list[str] | None = None) -> int:
 
     window.show()
 
-    # Даём Python-обработчику Ctrl+C шанс сработать: Qt-цикл иначе не отдаёт управление.
-    signal.signal(signal.SIGINT, lambda *_: app.quit())
+    # SIGTERM приходит при завершении сеанса и `systemctl --user stop`: без него
+    # процесс умирает мимо `aboutToQuit`, не сняв имя на шине и не остановив mpv.
+    # Ctrl+C (SIGINT) — то же самое из терминала; Qt-цикл сам управление не отдаёт,
+    # поэтому обработчикам помогает таймер ниже.
+    for received in (signal.SIGINT, signal.SIGTERM):
+        signal.signal(received, lambda *_: app.quit())
     wakeup = QTimer(app)
     wakeup.start(300)
     wakeup.timeout.connect(lambda: None)

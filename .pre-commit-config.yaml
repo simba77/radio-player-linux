@@ -1,0 +1,27 @@
+# Ставится отдельно: `pip install pre-commit && pre-commit install`.
+# Версии совпадают с requirements-dev.txt — иначе хук и CI расходятся
+# в том, что считать ошибкой.
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.16.2
+    hooks:
+      - id: ruff-check
+        args: [--fix]
+      - id: ruff-format
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: check-yaml
+      - id: check-toml
+      # Файлы переводов и иконки — бинарные и объёмные, но идут в репозиторий
+      # намеренно; остальное крупное лучше заметить до коммита.
+      - id: check-added-large-files
+        args: [--maxkb=512]
+
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.11.0.1
+    hooks:
+      - id: shellcheck

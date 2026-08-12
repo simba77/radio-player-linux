@@ -11,7 +11,4 @@ APP_RDNS_ID = "io.github.simba77.RadioPlayer"
 APP_NAME = "Radio Player"
 APP_VERSION = "0.1.0"
 
-#: Имя сокета для single-instance lock.
-IPC_SOCKET_NAME = APP_RDNS_ID
-
-__all__ = ["APP_ID", "APP_NAME", "APP_RDNS_ID", "APP_VERSION", "IPC_SOCKET_NAME"]
+__all__ = ["APP_ID", "APP_NAME", "APP_RDNS_ID", "APP_VERSION"]
