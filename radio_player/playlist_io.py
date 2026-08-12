@@ -11,7 +11,7 @@ import json
 import re
 from pathlib import Path
 
-from .models import Station
+from .models import Station, is_playable_url
 
 #: `#EXTINF:<секунды>,<название>` — название может содержать запятые.
 _EXTINF_RE = re.compile(r"^#EXTINF:[^,]*,(.*)$", re.IGNORECASE)
@@ -111,7 +111,7 @@ def read_file(path: Path) -> list[Station]:
 
 
 def _looks_like_stream(value: str) -> bool:
-    return value.startswith(("http://", "https://"))
+    return is_playable_url(value)
 
 
 def _name_from_url(url: str) -> str:

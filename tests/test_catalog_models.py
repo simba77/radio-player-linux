@@ -195,3 +195,31 @@ def test_cached_catalogs_follow_the_order_of_sources():
         "Второй",
         "Первый",
     ]
+
+
+# MARK: - Схема адреса
+
+
+def test_station_with_a_non_web_url_is_rejected():
+    """Каталог приходит из сети, а mpv откроет всё, что ему дадут."""
+    for url in ("file:///etc/passwd", "avdevice://x", "/home/user/track.mp3", "ftp://example.org/s"):
+        assert Station.from_dict({"id": "x", "name": "X", "url": url}) is None
+
+
+def test_station_with_a_web_url_is_accepted():
+    for url in ("http://example.org/stream", "HTTPS://example.org/stream.m3u8"):
+        assert Station.from_dict({"id": "x", "name": "X", "url": url}) is not None
+
+
+def test_catalog_drops_stations_with_unplayable_urls():
+    parsed = Catalog.from_dict(
+        {
+            **VALID,
+            "stations": [
+                {"id": "ok", "name": "Хорошая", "url": "https://example.org/ok.m3u8"},
+                {"id": "evil", "name": "Файл", "url": "file:///etc/shadow"},
+            ],
+        }
+    )
+    assert parsed is not None
+    assert [s.id for s in parsed.stations] == ["ok"]

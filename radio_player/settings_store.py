@@ -62,9 +62,15 @@ class SettingsStore(QObject):
         self._update(language=language)
 
     def add_catalog_url(self, url: str) -> bool:
-        """Добавляет каталог. False — если такой уже есть."""
+        """Добавляет каталог. False — если такой уже есть или адрес не годится.
+
+        Только HTTPS: каталог решает, что и откуда играть, и подмена его по
+        дороге равносильна подмене всего списка станций.
+        """
         cleaned = url.strip()
-        if not cleaned or cleaned in self._settings.extra_catalog_urls:
+        if not cleaned.lower().startswith("https://"):
+            return False
+        if cleaned in self._settings.extra_catalog_urls:
             return False
         self._settings.extra_catalog_urls.append(cleaned)
         self._commit()

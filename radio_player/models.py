@@ -13,6 +13,14 @@ from typing import Any
 SCHEMA_VERSION = 1
 #: Префикс идентификаторов станций, созданных пользователем.
 LOCAL_ID_PREFIX = "local:"
+#: Схемы, которые приложение готово играть. Список станций приходит из сети
+#: (каталог) и с диска (оверлей, импорт), а mpv откроет всё, что ему дадут:
+#: `file:///…` или `avdevice://…` в списке радиостанций — это уже не радио.
+PLAYABLE_SCHEMES = ("http://", "https://")
+
+
+def is_playable_url(url: str) -> bool:
+    return url.lower().startswith(PLAYABLE_SCHEMES)
 
 
 @dataclass(frozen=True, slots=True)
@@ -43,7 +51,7 @@ class Station:
         name = str(data.get("name") or "").strip()
         # `urlString` — имя поля в macOS-версии, поддерживаем для импорта.
         url = str(data.get("url") or data.get("urlString") or "").strip()
-        if not name or not url:
+        if not name or not is_playable_url(url):
             return None
         station_id = str(data.get("id") or "").strip()
         if not station_id:

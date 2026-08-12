@@ -493,8 +493,8 @@ class CatalogsTab(QWidget):
         url = url.strip()
         if not ok or not url:
             return
-        if not url.startswith(("http://", "https://")):
-            QMessageBox.warning(self, title, self.tr("The link must start with http:// or https://"))
+        if not url.lower().startswith("https://"):
+            QMessageBox.warning(self, title, self.tr("The link must start with https://"))
             return
         if url in catalog.DEFAULT_CATALOG_URLS or not self._settings.add_catalog_url(url):
             return

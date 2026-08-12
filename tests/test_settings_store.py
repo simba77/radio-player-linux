@@ -104,3 +104,10 @@ def test_settings_survive_a_restart(store):
     assert restarted.close_to_tray is False
     assert restarted.language == "en"
     assert restarted.extra_catalog_urls == (CATALOG,)
+
+
+def test_plain_http_catalog_is_rejected(store):
+    urls = count_signals(store.catalog_urls_changed)
+    assert store.add_catalog_url("http://example.org/catalog.json") is False
+    assert store.extra_catalog_urls == ()
+    assert urls == []

@@ -46,3 +46,12 @@ def test_non_http_catalog_urls_are_dropped():
 
 def test_update_interval_seconds():
     assert Settings(update_interval_hours=2).update_interval_seconds == 7200
+
+
+def test_plain_http_catalog_urls_are_dropped():
+    """Каталог задаёт, что и откуда играть: подменённый по дороге — это подменённый
+    список станций, поэтому только HTTPS."""
+    loaded = Settings.from_dict(
+        {"extra_catalog_urls": ["http://example.org/c.json", "https://example.org/ok.json"]}
+    )
+    assert loaded.extra_catalog_urls == ["https://example.org/ok.json"]

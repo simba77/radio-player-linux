@@ -48,10 +48,12 @@ class Settings:
             interval = cls.update_interval_hours
         interval = max(MIN_UPDATE_INTERVAL_HOURS, min(MAX_UPDATE_INTERVAL_HOURS, interval))
 
+        # Только HTTPS: каталог задаёт, что и откуда играть, и подменить его
+        # по дороге — значит подменить весь список станций пользователя.
         urls = [
             str(url).strip()
             for url in data.get("extra_catalog_urls") or []
-            if str(url).strip().startswith(("http://", "https://"))
+            if str(url).strip().lower().startswith("https://")
         ]
 
         language = data.get("language")

@@ -13,7 +13,7 @@ from pathlib import Path
 from PySide6.QtCore import QObject, Signal
 
 from . import paths, storage
-from .models import Catalog, Overlay, Station
+from .models import Catalog, Overlay, Station, is_playable_url
 
 
 class StationStore(QObject):
@@ -95,7 +95,8 @@ class StationStore(QObject):
 
     def add_custom(self, name: str, url: str) -> Station | None:
         cleaned_name, cleaned_url = name.strip(), url.strip()
-        if not cleaned_name or not cleaned_url:
+        # Проверка здесь, а не только в диалоге: станции приходят ещё и импортом.
+        if not cleaned_name or not is_playable_url(cleaned_url):
             return None
         station = Station(name=cleaned_name, url=cleaned_url)
         self._overlay.custom.append(station)
@@ -129,7 +130,7 @@ class StationStore(QObject):
 
     def set_custom_url(self, station_id: str, url: str) -> None:
         cleaned = url.strip()
-        if not cleaned:
+        if not is_playable_url(cleaned):
             return
         for index, station in enumerate(self._overlay.custom):
             if station.id == station_id:
