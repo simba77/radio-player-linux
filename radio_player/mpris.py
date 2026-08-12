@@ -221,6 +221,7 @@ class MprisServer(QObject):
         self._player_adaptor = _PlayerAdaptor(self, player)
 
         player.state_changed.connect(self._emit_playback_status)
+        player.volume_changed.connect(self._emit_volume)
         player.track_changed.connect(lambda _track: self._emit_metadata())
         player.station_changed.connect(lambda _station: self._emit_metadata())
         player.artwork_changed.connect(lambda _image: self._emit_metadata())
@@ -260,6 +261,11 @@ class MprisServer(QObject):
 
     def _emit_metadata(self) -> None:
         self._emit_properties({"Metadata": _metadata(self._player)})
+
+    def _emit_volume(self) -> None:
+        # Без этого слайдер в апплете «Медиаплеер» и в OSD остаётся на старом
+        # значении: клиент узнаёт об изменении только из этого сигнала.
+        self._emit_properties({"Volume": self._player_adaptor.Volume})
 
     def _emit_properties(self, changed: dict[str, Any]) -> None:
         if not self._registered:

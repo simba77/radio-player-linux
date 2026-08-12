@@ -89,6 +89,8 @@ class NowPlayingWidget(QWidget):
         self._volume.setFixedWidth(90)
         self._volume.setToolTip(self.tr("Volume"))
         self._volume.valueChanged.connect(player.set_volume)
+        # Громкость меняют и снаружи — медиаклавишами и апплетом через MPRIS.
+        player.volume_changed.connect(self._on_volume_changed)
 
         controls = QHBoxLayout()
         controls.setContentsMargins(0, 0, 0, 0)
@@ -150,6 +152,14 @@ class NowPlayingWidget(QWidget):
             self._artwork.setPixmap(_placeholder_pixmap(self._artwork.devicePixelRatioF()))
             return
         self._artwork.setPixmap(_rounded_pixmap(image, self._artwork.devicePixelRatioF()))
+
+    def _on_volume_changed(self, value: int) -> None:
+        if self._volume.value() == value:
+            return
+        # Без блокировки слайдер отправил бы значение обратно плееру.
+        self._volume.blockSignals(True)
+        self._volume.setValue(value)
+        self._volume.blockSignals(False)
 
     def _copy_track(self) -> None:
         track = self._player.current_track

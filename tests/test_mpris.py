@@ -11,7 +11,7 @@ import pytest
 
 pytest.importorskip("PySide6.QtDBus")
 
-from PySide6.QtCore import QObject
+from PySide6.QtCore import QObject, Signal
 from PySide6.QtGui import QImage
 
 from radio_player import mpris
@@ -95,3 +95,37 @@ def test_playback_status_reports_activity_not_sound():
     """
     assert playback_status(is_active=True) == "Playing"
     assert playback_status(is_active=False) == "Stopped"
+
+
+class SignallingPlayer(QObject):
+    """Плеер с сигналами — их слушает `MprisServer`."""
+
+    state_changed = Signal()
+    track_changed = Signal(object)
+    station_changed = Signal(object)
+    artwork_changed = Signal(object)
+    volume_changed = Signal(int)
+
+    def __init__(self):
+        super().__init__()
+        self.current_station = STATION
+        self.current_track = None
+        self.artwork_path = None
+        self.is_active = False
+        self.volume = 100
+        self.stations = [STATION]
+
+    def set_volume(self, value):
+        self.volume = value
+        self.volume_changed.emit(value)
+
+
+def test_volume_change_is_published(monkeypatch):
+    """Без этого слайдер громкости в апплете Plasma остаётся на старом значении."""
+    player = SignallingPlayer()
+    server = mpris.MprisServer(player, on_raise=lambda: None, on_quit=lambda: None)
+    published: list[dict] = []
+    monkeypatch.setattr(server, "_emit_properties", published.append)
+
+    player.set_volume(42)
+    assert published == [{"Volume": pytest.approx(0.42)}]

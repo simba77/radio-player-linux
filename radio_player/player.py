@@ -101,6 +101,8 @@ class PlayerManager(QObject):
     artwork_changed = Signal(object)
     #: Фаза мигания во время переподключения.
     blink_toggled = Signal(bool)
+    #: Громкость изменилась: `int` 0–100. Её меняют и извне — через MPRIS.
+    volume_changed = Signal(int)
     error_occurred = Signal(str)
 
     #: Внутренний мост из потока mpv в поток Qt.
@@ -230,11 +232,15 @@ class PlayerManager(QObject):
         return self._volume
 
     def set_volume(self, value: int) -> None:
-        self._volume = max(0, min(100, int(value)))
+        volume = max(0, min(100, int(value)))
+        if volume == self._volume:
+            return
+        self._volume = volume
         try:
             self._mpv["volume"] = self._volume
         except (OSError, RuntimeError):
             return
+        self.volume_changed.emit(self._volume)
         # Звук меняется сразу, диск ждёт: пользователь ведёт слайдер, а не
         # сохраняет настройку. Отсчёт начинается заново на каждом движении.
         self._volume_save_timer.start()

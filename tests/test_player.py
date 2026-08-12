@@ -445,3 +445,22 @@ def test_jitter_stays_within_the_declared_spread():
     assert max(values) <= 10_000 * (1 + RECONNECT_JITTER)
     # Разброс должен быть настоящим, иначе смысла в нём нет.
     assert len(values) > 1
+
+
+def test_volume_change_is_announced(player):
+    """Громкость меняют и снаружи: слайдер в окне и апплет MPRIS узнают об этом
+    только из сигнала."""
+    announced = []
+    player.volume_changed.connect(announced.append)
+
+    player.set_volume(55)
+    assert announced == [55]
+
+
+def test_setting_the_same_volume_announces_nothing(player):
+    player.set_volume(55)
+    announced = []
+    player.volume_changed.connect(announced.append)
+
+    player.set_volume(55)
+    assert announced == []
