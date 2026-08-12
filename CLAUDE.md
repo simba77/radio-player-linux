@@ -58,6 +58,14 @@ calling a method with signature `u` fails with `UnknownMethod`. The type can onl
 the interface metaobject: `QMetaObject.invokeMethod(interface, "UnInhibit", Q_ARG("uint", cookie))`.
 And `asyncCall` takes only the method name — pass arguments via `asyncCallWithArgumentList`.
 
+**The Inhibit portal is out of reach from PySide6.** `org.freedesktop.portal.Inhibit.Inhibit`
+has the signature `sua{sv}`, and neither route gets that `u` across: a plain call marshals the
+Python number as `int32` (`(sia{sv})` — rejected), while `QMetaObject.invokeMethod`, which is how
+`uint` is forced elsewhere, fails because the introspected metaobject describes the options
+argument as a raw type (`QDBusRawType<0x617b73767d>*`) that has no Python counterpart. Hence the
+legacy `org.freedesktop.PowerManagement.Inhibit` stays the only backend, and a future Flatpak
+build has to be granted `--talk-name=org.freedesktop.PowerManagement` rather than use the portal.
+
 **System sleep must be inhibited explicitly** (`power.py`): neither libmpv nor an active MPRIS
 player holds the system awake, and idle auto-suspend cuts the stream off.
 

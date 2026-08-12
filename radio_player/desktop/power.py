@@ -11,6 +11,13 @@ gnome-settings-daemon не смотрят на активный плеер. Бе
 Интерфейс `org.freedesktop.PowerManagement.Inhibit` — legacy-API, но его
 реализуют и PowerDevil, и gnome-settings-daemon, поэтому он покрывает оба
 целевых окружения без ветвлений.
+
+Портал (`org.freedesktop.portal.Inhibit`), который был бы правильным путём
+в песочнице, из PySide6 вызвать нечем: его `Inhibit` имеет сигнатуру `sua{sv}`,
+а PySide6 отправляет число как `int32` и не даёт задать `uint` через метаобъект —
+там третий аргумент описан сырым типом без Python-эквивалента (подробности
+в CLAUDE.md). Поэтому сборке во Flatpak придётся разрешить обращение
+к `org.freedesktop.PowerManagement` напрямую.
 """
 
 from __future__ import annotations
