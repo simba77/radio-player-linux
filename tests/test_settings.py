@@ -55,3 +55,17 @@ def test_plain_http_catalog_urls_are_dropped():
         {"extra_catalog_urls": ["http://example.org/c.json", "https://example.org/ok.json"]}
     )
     assert loaded.extra_catalog_urls == ["https://example.org/ok.json"]
+
+
+def test_settings_from_a_future_version_fall_back_to_defaults():
+    """Файл новее поддерживаемого не разбирается наугад: берём умолчания,
+    а сам файл откладывается в сторону — см. `storage.read_document`."""
+    from radio_player.core import paths
+
+    path = paths.settings_file()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text('{"schema": 99, "close_to_tray": false}', encoding="utf-8")
+
+    loaded = settings_module.load()
+    assert loaded.close_to_tray is True
+    assert path.with_suffix(".bak-v99").exists()

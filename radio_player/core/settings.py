@@ -11,7 +11,9 @@ from pathlib import Path
 from typing import Any
 
 from . import paths, storage
-from .models import SCHEMA_VERSION
+
+#: Версия схемы файла настроек — своя, не связанная с версией каталогов.
+SETTINGS_SCHEMA_VERSION = 1
 
 #: Языки интерфейса. `en` — исходные строки в коде, перевод для него не нужен.
 LANGUAGES = ("en", "ru")
@@ -36,7 +38,7 @@ class Settings:
 
     def to_dict(self) -> dict[str, Any]:
         return {
-            "schema": SCHEMA_VERSION,
+            "schema": SETTINGS_SCHEMA_VERSION,
             "close_to_tray": self.close_to_tray,
             "update_interval_hours": self.update_interval_hours,
             "extra_catalog_urls": list(self.extra_catalog_urls),
@@ -78,7 +80,7 @@ class Settings:
 
 
 def load() -> Settings:
-    return Settings.from_dict(storage.read_json(_path(), default={}))
+    return Settings.from_dict(storage.read_document(_path(), SETTINGS_SCHEMA_VERSION))
 
 
 def save(settings: Settings) -> bool:

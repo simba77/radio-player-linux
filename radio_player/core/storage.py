@@ -8,11 +8,14 @@ from __future__ import annotations
 
 import contextlib
 import json
+import logging
 import os
 from pathlib import Path
 from typing import Any
 
 from . import paths
+
+_log = logging.getLogger(__name__)
 
 
 def read_json(path: Path, default: Any = None) -> Any:
@@ -42,6 +45,32 @@ def write_json(path: Path, data: Any) -> bool:
         return False
     else:
         return True
+
+
+def read_document(path: Path, supported_schema: int) -> dict[str, Any]:
+    """Читает документ с полем `schema`, разбираясь с чужими версиями.
+
+    Файл новее поддерживаемого откладывается в `<имя>.bak-v<N>`, а приложение
+    начинает с чистого листа: писать в него мы всё равно будем своим форматом,
+    и без этого откат на старую версию тихо стёр бы настройки новой.
+
+    Версия младше поддерживаемой отдаётся как есть — за перенос полей отвечает
+    `from_dict` того, кому документ принадлежит.
+    """
+    data = read_json(path, default={})
+    if not isinstance(data, dict):
+        return {}
+
+    schema = data.get("schema")
+    if isinstance(schema, int) and schema > supported_schema:
+        backup = path.with_suffix(f".bak-v{schema}")
+        _log.warning(
+            "%s создан более новой версией (schema %s) — отложен в %s", path.name, schema, backup.name
+        )
+        with contextlib.suppress(OSError):
+            path.replace(backup)
+        return {}
+    return data
 
 
 def state_path() -> Path:

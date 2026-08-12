@@ -9,8 +9,10 @@ import uuid
 from dataclasses import dataclass, field
 from typing import Any
 
-#: Версия схемы, которую понимает это приложение. Каталог с большей версией игнорируется.
-SCHEMA_VERSION = 1
+#: Версия схемы каталога. Каталог с большей версией игнорируется целиком.
+CATALOG_SCHEMA_VERSION = 1
+#: Версия схемы оверлея — она своя: форматы меняются независимо друг от друга.
+OVERLAY_SCHEMA_VERSION = 1
 #: Префикс идентификаторов станций, созданных пользователем.
 LOCAL_ID_PREFIX = "local:"
 #: Схемы, которые приложение готово играть. Список станций приходит из сети
@@ -92,7 +94,7 @@ class Catalog:
         if not isinstance(data, dict):
             return None
         schema = data.get("schema")
-        if not isinstance(schema, int) or schema > SCHEMA_VERSION:
+        if not isinstance(schema, int) or schema > CATALOG_SCHEMA_VERSION:
             return None
         catalog_id = str(data.get("id") or "").strip()
         if not catalog_id:
@@ -134,7 +136,7 @@ class Overlay:
 
     def to_dict(self) -> dict[str, Any]:
         return {
-            "schema": SCHEMA_VERSION,
+            "schema": OVERLAY_SCHEMA_VERSION,
             "order": list(self.order),
             "hidden": sorted(self.hidden),
             "overrides": self.overrides,

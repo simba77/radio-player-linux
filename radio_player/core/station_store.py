@@ -13,7 +13,7 @@ from pathlib import Path
 from PySide6.QtCore import QObject, Signal
 
 from . import paths, storage
-from .models import Catalog, Overlay, Station, is_playable_url
+from .models import OVERLAY_SCHEMA_VERSION, Catalog, Overlay, Station, is_playable_url
 
 
 class StationStore(QObject):
@@ -24,7 +24,9 @@ class StationStore(QObject):
     def __init__(self, catalogs: list[Catalog] | None = None, parent: QObject | None = None) -> None:
         super().__init__(parent)
         self._catalogs: list[Catalog] = list(catalogs or [])
-        self._overlay = Overlay.from_dict(storage.read_json(self._overlay_path(), default={}))
+        self._overlay = Overlay.from_dict(
+            storage.read_document(self._overlay_path(), OVERLAY_SCHEMA_VERSION)
+        )
         self._stations: list[Station] = []
         self._rebuild()
 

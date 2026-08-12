@@ -62,3 +62,41 @@ def test_write_json_reports_failure(tmp_path):
     blocker = tmp_path / "blocker"
     blocker.write_text("", encoding="utf-8")
     assert storage.write_json(blocker / "data.json", {"a": 1}) is False
+
+
+# MARK: - Версия схемы
+
+
+def write_document(data: dict) -> None:
+    path = storage.state_path()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(data), encoding="utf-8")
+
+
+def test_document_of_a_known_schema_is_read():
+    write_document({"schema": 1, "close_to_tray": False})
+    assert storage.read_document(storage.state_path(), supported_schema=1) == {
+        "schema": 1,
+        "close_to_tray": False,
+    }
+
+
+def test_document_without_a_schema_is_read():
+    """Файлы ранних версий поля не имели — терять их не за что."""
+    write_document({"close_to_tray": False})
+    assert storage.read_document(storage.state_path(), supported_schema=1) == {"close_to_tray": False}
+
+
+def test_document_from_the_future_is_set_aside():
+    """Откат на старую версию не должен тихо стирать настройки новой."""
+    write_document({"schema": 99, "future_option": True})
+    path = storage.state_path()
+
+    assert storage.read_document(path, supported_schema=1) == {}
+    assert path.exists() is False
+    backup = path.with_suffix(".bak-v99")
+    assert json.loads(backup.read_text(encoding="utf-8"))["future_option"] is True
+
+
+def test_missing_document_is_empty():
+    assert storage.read_document(storage.state_path(), supported_schema=1) == {}
