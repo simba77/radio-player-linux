@@ -28,7 +28,7 @@ class ArtworkLoader(QObject):
     def __init__(self, parent: QObject | None = None) -> None:
         super().__init__(parent)
         self._network = QNetworkAccessManager(self)
-        self._dir = paths.cache_dir() / "artwork"
+        self._dir = paths.artwork_cache_dir()
         self._pending: dict[str, QNetworkReply] = {}
 
     def load(self, url: str) -> None:

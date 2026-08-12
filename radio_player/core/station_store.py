@@ -220,7 +220,7 @@ class StationStore(QObject):
 
     @staticmethod
     def _overlay_path() -> Path:
-        return paths.config_dir() / "overlay.json"
+        return paths.overlay_file()
 
 
 def _merge_order(visible_order: list[str], full_order: list[str]) -> list[str]:

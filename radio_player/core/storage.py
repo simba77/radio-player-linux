@@ -45,7 +45,7 @@ def write_json(path: Path, data: Any) -> bool:
 
 
 def state_path() -> Path:
-    return paths.config_dir() / "state.json"
+    return paths.state_file()
 
 
 def load_state() -> dict[str, Any]:

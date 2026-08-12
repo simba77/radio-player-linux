@@ -86,4 +86,4 @@ def save(settings: Settings) -> bool:
 
 
 def _path() -> Path:
-    return paths.config_dir() / "settings.json"
+    return paths.settings_file()

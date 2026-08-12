@@ -24,6 +24,30 @@ def cache_dir() -> Path:
     return _base("XDG_CACHE_HOME", ".cache")
 
 
+def settings_file() -> Path:
+    return config_dir() / "settings.json"
+
+
+def overlay_file() -> Path:
+    """Правки пользователя поверх каталогов."""
+    return config_dir() / "overlay.json"
+
+
+def state_file() -> Path:
+    """Громкость, последняя станция, время последней проверки каталогов."""
+    return config_dir() / "state.json"
+
+
+def catalog_cache_dir() -> Path:
+    """Скачанные каталоги. Имена файлов внутри строит `core.catalog`:
+    это его знание о том, чем он их различает."""
+    return cache_dir() / "catalogs"
+
+
+def artwork_cache_dir() -> Path:
+    return cache_dir() / "artwork"
+
+
 def autostart_file() -> Path:
     """`.desktop`-файл автозапуска (аналог SMAppService на macOS)."""
     return _autostart_dir() / f"{APP_RDNS_ID}.desktop"
@@ -47,5 +71,5 @@ def _autostart_dir() -> Path:
 
 def ensure_dirs() -> None:
     """Создаёт директории, в которые приложение пишет. Идемпотентно."""
-    for path in (config_dir(), cache_dir() / "catalogs", cache_dir() / "artwork"):
+    for path in (config_dir(), catalog_cache_dir(), artwork_cache_dir()):
         path.mkdir(parents=True, exist_ok=True)

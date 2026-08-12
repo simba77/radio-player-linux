@@ -228,7 +228,7 @@ def _now() -> float:
 
 
 def _cache_dir() -> Path:
-    return paths.cache_dir() / "catalogs"
+    return paths.catalog_cache_dir()
 
 
 def _cache_path(url: str) -> Path:

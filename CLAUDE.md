@@ -74,7 +74,9 @@ when the code and that file disagree, the file is the bug.
   `tests/test_layers.py`. The domain knows nothing about widgets, D-Bus or sound.
 - **Default stations are never hardcoded** — they come from JSON catalogs and are merged with the
   user's local overlay; a catalog update never overwrites the user's edits.
-- **All paths to user files live in `paths.py`** (XDG). No other module builds paths.
+- **All paths to user files live in `core/paths.py`** (XDG): every file the app writes has a
+  function there. Modules compose names only inside a directory that module owns — the
+  catalog cache names files by a hash of the source URL, and that is its business alone.
 - **The app has two names on purpose.** `APP_ID` (`radio-player`) is the command and the directory
   under `~/.config`; `APP_RDNS_ID` (`io.github.simba77.RadioPlayer`) is how the system knows the
   app — `.desktop` file, icons, AppStream, D-Bus. Anything visible outside the process uses the
