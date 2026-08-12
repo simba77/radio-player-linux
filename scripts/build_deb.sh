@@ -47,7 +47,9 @@ Depends: python3 (>= 3.12),
  python3-pyside6.qtnetwork,
  python3-pyside6.qtdbus,
  python3-mpv,
- libmpv2
+ libmpv2,
+ qt6-svg,
+ qt6-translations-l10n
 Maintainer: simba77 <itenterprise105@gmail.com>
 Homepage: https://github.com/simba77/radio-player-linux
 Description: Плеер интернет-радио

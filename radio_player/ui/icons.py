@@ -7,16 +7,26 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QApplication, QStyle
+
+from .. import APP_RDNS_ID
 
 PLAY = "media-playback-start"
 STOP = "media-playback-stop"
 PAUSE = "media-playback-pause"
 NEXT = "media-skip-forward"
 PREVIOUS = "media-skip-backward"
-RADIO = "audio-radio"
+#: Иконка самого приложения. Ставится в hicolor, поэтому находится по теме;
+#: при запуске из исходников её там ещё нет — тогда берём файл из пакета.
+RADIO = APP_RDNS_ID
 SETTINGS = "configure"
+
+_BUNDLED_ICON = (
+    Path(__file__).parent.parent / "resources" / "icons" / "hicolor" / "scalable" / "apps"
+) / f"{APP_RDNS_ID}.svg"
 
 _FALLBACKS = {
     PLAY: QStyle.StandardPixmap.SP_MediaPlay,
@@ -33,6 +43,10 @@ def get(name: str) -> QIcon:
     icon = QIcon.fromTheme(name)
     if not icon.isNull():
         return icon
+    if name == RADIO and _BUNDLED_ICON.exists():
+        bundled = QIcon(str(_BUNDLED_ICON))
+        if not bundled.isNull():
+            return bundled
     standard = _FALLBACKS.get(name)
     app = QApplication.instance()
     # Стандартные пиктограммы живёт в стиле QApplication: в консольном

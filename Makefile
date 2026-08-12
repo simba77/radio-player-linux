@@ -18,7 +18,7 @@ LUPDATE ?= $(shell command -v pyside6-lupdate 2>/dev/null || echo /usr/lib/qt6/b
 LANGUAGES := ru en
 SCANNED_LANGUAGES := ru
 
-.PHONY: help run probe deps deps-i18n devenv check lint format typecheck test i18n-update i18n-release install uninstall deb clean
+.PHONY: help run probe deps deps-i18n devenv check lint format typecheck test icons i18n-update i18n-release install uninstall deb clean
 
 help:
 	@echo "make deps      — установить системные зависимости (нужен sudo)"
@@ -35,6 +35,7 @@ help:
 	@echo "make i18n-release — собрать .qm из .ts"
 	@echo "make install   — установить в $(PREFIX)"
 	@echo "make uninstall — удалить из $(PREFIX)"
+	@echo "make icons     — перерисовать PNG из SVG-иконки"
 	@echo "make deb       — собрать .deb в dist/"
 
 devenv:
@@ -45,7 +46,7 @@ deps:
 	sudo apt install -y libmpv2 python3-mpv \
 		python3-pyside6.qtcore python3-pyside6.qtgui python3-pyside6.qtwidgets \
 		python3-pyside6.qtnetwork python3-pyside6.qtdbus \
-		qt6-translations-l10n
+		qt6-svg qt6-translations-l10n
 
 # Только для работы над переводами: lupdate с поддержкой Python.
 deps-i18n:
@@ -90,6 +91,9 @@ install:
 
 uninstall:
 	PREFIX=$(PREFIX) sh scripts/uninstall.sh
+
+icons:
+	$(PYTHON) scripts/render_icons.py
 
 deb:
 	sh scripts/build_deb.sh

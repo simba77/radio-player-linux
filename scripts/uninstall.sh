@@ -12,6 +12,8 @@ rm -f "$PREFIX/bin/radio-player"
 rm -f "$PREFIX/share/applications/io.github.simba77.RadioPlayer.desktop"
 # Имя из версий до перехода на reverse-DNS.
 rm -f "$PREFIX/share/applications/radio-player.desktop"
+rm -f "$PREFIX/share/metainfo/io.github.simba77.RadioPlayer.metainfo.xml"
+find "$PREFIX/share/icons/hicolor" -name 'io.github.simba77.RadioPlayer.*' -delete 2>/dev/null || true
 
 # Файл автозапуска создаёт само приложение, и он указывает на команду, которую
 # мы только что удалили. Оставить его — значит заставлять сессию при каждом

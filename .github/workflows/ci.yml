@@ -33,7 +33,7 @@ jobs:
           sudo apt-get install -y --no-install-recommends \
             python3-pyside6.qtcore python3-pyside6.qtgui python3-pyside6.qtwidgets \
             python3-pyside6.qtnetwork python3-pyside6.qtdbus \
-            python3-venv qt6-translations-l10n desktop-file-utils
+            python3-venv qt6-svg qt6-translations-l10n desktop-file-utils appstream
 
       - name: Create the development environment
         run: make devenv
@@ -48,8 +48,11 @@ jobs:
       - name: Test
         run: make test
 
-      - name: Validate the desktop entry
-        run: desktop-file-validate radio_player/resources/io.github.simba77.RadioPlayer.desktop
+      - name: Validate the desktop entry and AppStream data
+        run: |
+          desktop-file-validate radio_player/resources/io.github.simba77.RadioPlayer.desktop
+          appstreamcli validate --no-net \
+            packaging/appstream/io.github.simba77.RadioPlayer.metainfo.xml
 
       # Упаковка ломается тише кода: заметить это до релиза можно только сборкой.
       - name: Build the package

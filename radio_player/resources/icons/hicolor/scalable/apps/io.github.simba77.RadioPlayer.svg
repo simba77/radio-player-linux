@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
+  <defs>
+    <linearGradient id="body" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#54a3f0"/>
+      <stop offset="1" stop-color="#2b6cd4"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Антенна: выходит из корпуса вверх-вправо. -->
+  <g fill="none" stroke="#8ec5f5" stroke-width="2.5" stroke-linecap="round">
+    <path d="M33 17 L41 6"/>
+  </g>
+  <circle cx="41.5" cy="5.5" r="2.5" fill="#8ec5f5"/>
+
+  <!-- Корпус приёмника. -->
+  <rect x="3" y="15" width="42" height="28" rx="5" fill="url(#body)"/>
+
+  <!-- Динамик. -->
+  <circle cx="33" cy="29" r="8.5" fill="#1b4f9e" opacity="0.55"/>
+  <circle cx="33" cy="29" r="6" fill="none" stroke="#ffffff" stroke-width="2.5"/>
+  <circle cx="33" cy="29" r="1.75" fill="#ffffff"/>
+
+  <!-- Шкала настройки. -->
+  <g stroke="#ffffff" stroke-width="2.5" stroke-linecap="round">
+    <path d="M10 23 H21" opacity="0.9"/>
+    <path d="M10 29 H18" opacity="0.6"/>
+    <path d="M10 35 H21" opacity="0.9"/>
+  </g>
+</svg>

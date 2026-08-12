@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Без этого файла приложения нет ни в Discover, ни в GNOME Software:
+     они показывают только то, что описано в AppStream. -->
+<component type="desktop-application">
+  <id>io.github.simba77.RadioPlayer</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>MIT</project_license>
+
+  <name>Radio Player</name>
+  <summary>Listen to internet radio stations</summary>
+  <summary xml:lang="ru">Прослушивание интернет-радио</summary>
+
+  <description>
+    <p>
+      A minimal internet radio player: a system tray icon plus a regular window.
+      It plays HLS and direct HTTP(S) streams, shows the current track with cover
+      art, and survives network drops on its own.
+    </p>
+    <p xml:lang="ru">
+      Минималистичный плеер интернет-радио: иконка в системном лотке и обычное
+      окно. Играет HLS и прямые HTTP(S)-потоки, показывает текущий трек с
+      обложкой и сам переживает обрывы сети.
+    </p>
+    <p>Features:</p>
+    <p xml:lang="ru">Возможности:</p>
+    <ul>
+      <li>Station list assembled from catalogs, merged with your own edits</li>
+      <li xml:lang="ru">Список станций из каталогов, объединённый с вашими правками</li>
+      <li>Import from M3U, PLS and JSON playlists</li>
+      <li xml:lang="ru">Импорт из плейлистов M3U, PLS и JSON</li>
+      <li>Media keys and the media player applet through MPRIS2</li>
+      <li xml:lang="ru">Медиаклавиши и апплет медиаплеера через MPRIS2</li>
+      <li>The machine stays awake while on air</li>
+      <li xml:lang="ru">Компьютер не засыпает во время эфира</li>
+      <li>English and Russian interface</li>
+      <li xml:lang="ru">Английский и русский интерфейс</li>
+    </ul>
+  </description>
+
+  <developer id="io.github.simba77">
+    <name>simba77</name>
+  </developer>
+
+  <launchable type="desktop-id">io.github.simba77.RadioPlayer.desktop</launchable>
+  <provides>
+    <binary>radio-player</binary>
+    <!-- Приложение занимает это имя на шине, пока играет. -->
+    <dbus type="user">org.mpris.MediaPlayer2.io.github.simba77.RadioPlayer</dbus>
+  </provides>
+
+  <url type="homepage">https://github.com/simba77/radio-player-linux</url>
+  <url type="bugtracker">https://github.com/simba77/radio-player-linux/issues</url>
+  <url type="vcs-browser">https://github.com/simba77/radio-player-linux</url>
+
+  <categories>
+    <category>AudioVideo</category>
+    <category>Audio</category>
+    <category>Player</category>
+  </categories>
+
+  <keywords>
+    <keyword>radio</keyword>
+    <keyword xml:lang="ru">радио</keyword>
+    <keyword>stream</keyword>
+    <keyword xml:lang="ru">поток</keyword>
+    <keyword>music</keyword>
+    <keyword xml:lang="ru">музыка</keyword>
+    <keyword translate="no">HLS</keyword>
+    <keyword translate="no">MPRIS</keyword>
+  </keywords>
+
+  <supports>
+    <control>pointing</control>
+    <control>keyboard</control>
+  </supports>
+
+  <!-- Ничего из того, что оценивают рейтинги, приложение не показывает. -->
+  <content_rating type="oars-1.1"/>
+
+  <releases>
+    <release version="0.1.0" date="2026-08-11">
+      <description>
+        <p>First release.</p>
+        <p xml:lang="ru">Первый выпуск.</p>
+      </description>
+    </release>
+  </releases>
+</component>
