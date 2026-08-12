@@ -63,8 +63,15 @@ player holds the system awake, and idle auto-suspend cuts the stream off.
 
 ## Decisions not visible from the code
 
-- Data flow: `__main__` → `StationStore` → `PlayerManager` (owns the store) → UI via signals.
-  Qt signals replace `@Published` from the macOS version.
+`docs/architecture.md` holds the long version: layers, catalog and overlay formats, the merge
+rules, why metadata needs two providers and what the playback states guarantee. Keep it in sync —
+when the code and that file disagree, the file is the bug.
+
+- Data flow: `__main__` builds `StationStore` and `SettingsStore`, hands them to `PlayerManager`
+  and the UI, and connects the two — nothing else wires subsystems together. Qt signals replace
+  `@Published` from the macOS version.
+- **Layers are enforced, not just intended**: `ui → playback/desktop → core`, checked by
+  `tests/test_layers.py`. The domain knows nothing about widgets, D-Bus or sound.
 - **Default stations are never hardcoded** — they come from JSON catalogs and are merged with the
   user's local overlay; a catalog update never overwrites the user's edits.
 - **All paths to user files live in `paths.py`** (XDG). No other module builds paths.

@@ -131,6 +131,11 @@ Developed and verified on KDE neon (Plasma 6, Wayland). On GNOME the system tray
 without the AppIndicator extension — there the app runs as a window and through MPRIS, with no
 panel icon.
 
+## Architecture
+
+Data model, the two metadata providers and the playback state machine are described in
+[docs/architecture.md](docs/architecture.md).
+
 ## Stack
 
 Python · PySide6 (Qt 6) · libmpv · MPRIS2

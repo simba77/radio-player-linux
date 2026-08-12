@@ -1,7 +1,7 @@
 """Метаданные HLS-потоков hostingradio (Radio Record) из тега `#EXT-X-DATERANGE`.
 
 ffmpeg этот тег пропускает, поэтому libmpv для таких потоков не отдаёт ничего —
-манифест приходится опрашивать самим. Подробности в PLAN.md §2.1.
+манифест приходится опрашивать самим. Подробности в `docs/architecture.md`.
 
     #EXT-X-DATERANGE:ID="6a7a2f97…",CLASS="ru.hostingradio.meta",START-DATE="…",END-ON-NEXT=YES,
                      X-ARTIST="BLOND_ISH",X-TITLE="$MONEY",X-METADATA-URI="metadata/6a7a2f97….json"

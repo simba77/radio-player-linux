@@ -1,4 +1,4 @@
-"""Тесты мержа каталогов с оверлеем — PLAN.md §3.3."""
+"""Тесты мержа каталогов с оверлеем — правила в `docs/architecture.md`."""
 
 from __future__ import annotations
 
