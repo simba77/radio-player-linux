@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import os
+
 from PySide6.QtCore import QSize, Qt
 from PySide6.QtGui import QCloseEvent, QFont, QIcon, QKeySequence, QPixmap, QShortcut
 from PySide6.QtWidgets import (
@@ -192,7 +194,20 @@ class MainWindow(QWidget):
         else:
             self.show_and_raise()
 
-    def show_and_raise(self) -> None:
-        self.showNormal()
-        self.raise_()
-        self.activateWindow()
+    def show_and_raise(self, activation_token: str = "") -> None:
+        """Показывает окно и переводит на него фокус.
+
+        Токен приходит от второго запуска приложения: на Wayland композитор
+        отдаёт фокус только по нему. Qt читает токен из окружения в момент
+        активации, поэтому переменную ставим прямо перед ней и сразу убираем —
+        чужой токен, оставленный в окружении, был бы уже недействителен.
+        Без токена (X11, запуск из терминала) окно просто поднимется как раньше.
+        """
+        if activation_token:
+            os.environ["XDG_ACTIVATION_TOKEN"] = activation_token
+        try:
+            self.showNormal()
+            self.raise_()
+            self.activateWindow()
+        finally:
+            os.environ.pop("XDG_ACTIVATION_TOKEN", None)

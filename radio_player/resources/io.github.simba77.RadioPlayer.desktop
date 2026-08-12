@@ -13,5 +13,5 @@ Terminal=false
 Categories=AudioVideo;Audio;Player;
 Keywords=radio;stream;music;
 Keywords[ru]=радио;поток;музыка;
-StartupNotify=false
+StartupNotify=true
 SingleMainWindow=true
