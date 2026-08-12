@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import contextlib
 import locale
+import random
 from collections.abc import Callable
 from enum import Enum, auto
 from typing import Any, Protocol
@@ -30,8 +31,14 @@ from .artwork import ArtworkLoader
 from .metadata import MetadataProvider, make_provider
 from .models import Station, TrackInfo
 
-#: Пауза между попытками переподключения — как на macOS, без backoff.
+#: Первая пауза между попытками переподключения — как на macOS.
 RECONNECT_INTERVAL_MS = 3000
+#: Потолок паузы. Дальше расти незачем: минута — приемлемая задержка возврата
+#: эфира, а стучаться чаще при долгом простое сервера просто невежливо.
+RECONNECT_MAX_INTERVAL_MS = 60_000
+#: Разброс паузы. Сервер радио падает сразу для всех слушателей, и без разброса
+#: они возвращаются одной волной ровно в те же секунды.
+RECONNECT_JITTER = 0.25
 #: Сколько ждём выхода из буферизации, прежде чем считать поток зависшим.
 STALL_TIMEOUT_MS = 6000
 #: Период мигания иконки в трее во время переподключения.
@@ -118,6 +125,7 @@ class PlayerManager(QObject):
         self.error_message: str | None = None
 
         self._should_be_playing = False
+        self._reconnect_delay_ms = RECONNECT_INTERVAL_MS
         self._provider: MetadataProvider | None = None
 
         state = storage.load_state()
@@ -339,13 +347,22 @@ class PlayerManager(QObject):
         self._stall_timer.stop()
         self._set_state(PlaybackState.RECONNECTING)
         self._blink_timer.start()
-        self._reconnect_timer.start()
+        self._reconnect_delay_ms = RECONNECT_INTERVAL_MS
+        self._arm_reconnect()
 
     def _attempt_reconnect(self) -> None:
         if not self._should_be_playing or self.current_station is None:
             self._reconnect_timer.stop()
             return
+        # Попытка не удалась — следующей ждём дольше. Сеть, вернувшаяся раньше,
+        # всё равно разбудит нас через `on_network_reachable`.
+        self._reconnect_delay_ms = min(self._reconnect_delay_ms * 2, RECONNECT_MAX_INTERVAL_MS)
+        self._arm_reconnect()
         self._load_and_play(self.current_station)
+
+    def _arm_reconnect(self) -> None:
+        self._reconnect_timer.setInterval(_with_jitter(self._reconnect_delay_ms))
+        self._reconnect_timer.start()
 
     def _on_stalled(self) -> None:
         """Буферизация затянулась — считаем поток зависшим."""
@@ -436,6 +453,12 @@ def _end_file_means_disconnect(reason: object) -> bool:
         # На случай, если версия python-mpv отдаст enum или строку.
         name = str(getattr(reason, "name", reason)).rsplit(".", 1)[-1].lower()
     return name in _DISCONNECT_REASONS
+
+
+def _with_jitter(interval_ms: int) -> int:
+    """Разводит по времени слушателей, потерявших связь одновременно."""
+    spread = interval_ms * RECONNECT_JITTER
+    return max(1, int(random.uniform(interval_ms - spread, interval_ms + spread)))  # noqa: S311
 
 
 def _make_timer(

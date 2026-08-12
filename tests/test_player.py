@@ -390,3 +390,58 @@ def test_shutdown_releases_everything(player, mpv):
     assert player._reconnect_timer.isActive() is False
     assert player._blink_timer.isActive() is False
     assert player._stall_timer.isActive() is False
+
+
+# MARK: - Пауза между попытками
+
+
+def test_reconnect_pause_grows_with_each_failure(player, mpv, monkeypatch):
+    """Сервер радио может лежать часами — стучаться каждые три секунды невежливо."""
+    from radio_player import player as player_module
+
+    monkeypatch.setattr(player_module, "_with_jitter", int)
+    start_playing(player, mpv)
+    mpv.end_file(ERROR)
+
+    delays = [player._reconnect_timer.interval()]
+    for _ in range(3):
+        player._reconnect_timer.timeout.emit()
+        delays.append(player._reconnect_timer.interval())
+
+    assert delays == [3000, 6000, 12000, 24000]
+
+
+def test_reconnect_pause_stops_at_the_ceiling(player, mpv, monkeypatch):
+    from radio_player import player as player_module
+
+    monkeypatch.setattr(player_module, "_with_jitter", int)
+    start_playing(player, mpv)
+    mpv.end_file(ERROR)
+    for _ in range(20):
+        player._reconnect_timer.timeout.emit()
+
+    assert player._reconnect_timer.interval() == player_module.RECONNECT_MAX_INTERVAL_MS
+
+
+def test_reconnect_pause_starts_over_after_a_new_break(player, mpv, monkeypatch):
+    """Связь восстановилась — накопленная задержка больше не про эту ситуацию."""
+    from radio_player import player as player_module
+
+    monkeypatch.setattr(player_module, "_with_jitter", int)
+    start_playing(player, mpv)
+    mpv.end_file(ERROR)
+    player._reconnect_timer.timeout.emit()
+    mpv.emit("core-idle", False)
+
+    mpv.end_file(ERROR)
+    assert player._reconnect_timer.interval() == player_module.RECONNECT_INTERVAL_MS
+
+
+def test_jitter_stays_within_the_declared_spread():
+    from radio_player.player import RECONNECT_JITTER, _with_jitter
+
+    values = {_with_jitter(10_000) for _ in range(200)}
+    assert min(values) >= 10_000 * (1 - RECONNECT_JITTER)
+    assert max(values) <= 10_000 * (1 + RECONNECT_JITTER)
+    # Разброс должен быть настоящим, иначе смысла в нём нет.
+    assert len(values) > 1

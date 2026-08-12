@@ -10,6 +10,7 @@ ffmpeg этот тег пропускает, поэтому libmpv для так
 from __future__ import annotations
 
 import json
+import logging
 import re
 from collections.abc import Callable
 from urllib.parse import urljoin
@@ -25,12 +26,19 @@ POLL_INTERVAL_MS = 5000
 #: После стольких подряд неудачных опросов перезапрашиваем мастер-плейлист:
 #: параметр hlssid в ссылке на variant протухает.
 _FAILURES_BEFORE_REFRESH = 3
+#: Сколько манифестов подряд можно прочитать без единого DATERANGE, прежде чем
+#: признать, что метаданных у станции нет. Провайдер выбирается по расширению
+#: `.m3u8`, а тег отдаёт только hostingradio: у остальных HLS-станций опрос
+#: каждые пять секунд не найдёт ничего никогда. При ~5 с это минута ожидания.
+_EMPTY_POLLS_BEFORE_GIVING_UP = 12
 #: Размер обложки. 300×300 хватает и для окна, и для MPRIS.
 _COVER_KEYS = ("coverImageUrl300", "coverImageUrl600", "coverImageUrl100")
 
 _DATERANGE_RE = re.compile(r"^#EXT-X-DATERANGE:(.+)$", re.MULTILINE)
 _ATTR_RE = re.compile(r'([A-Za-z0-9-]+)="([^"]*)"')
 _STREAM_INF_RE = re.compile(r"^#EXT-X-STREAM-INF:.*$\r?\n^(?!#)(\S+)\s*$", re.MULTILINE)
+
+_log = logging.getLogger(__name__)
 
 
 class HlsDaterangeProvider(MetadataProvider):
@@ -45,6 +53,7 @@ class HlsDaterangeProvider(MetadataProvider):
         self._variant_url: str | None = None
         self._last_range_id: str | None = None
         self._failures = 0
+        self._empty_polls = 0
         self._replies: set[QNetworkReply] = set()
 
     # MARK: - Жизненный цикл
@@ -63,6 +72,7 @@ class HlsDaterangeProvider(MetadataProvider):
         self._master_url = None
         self._variant_url = None
         self._failures = 0
+        self._empty_polls = 0
         if self._last_range_id is not None:
             self._last_range_id = None
             self.track_cleared.emit()
@@ -107,6 +117,7 @@ class HlsDaterangeProvider(MetadataProvider):
         # Если STREAM-INF нет, значит нам сразу дали media playlist.
         self._variant_url = urljoin(self._master_url, match.group(1)) if match else self._master_url
         self._failures = 0
+        self._empty_polls = 0
         self._poll_variant()
         self._timer.start()
 
@@ -130,7 +141,13 @@ class HlsDaterangeProvider(MetadataProvider):
         attrs = _parse_daterange(body)
         if attrs is None:
             # Станция не из hostingradio либо метаданных сейчас нет — это нормально.
+            self._empty_polls += 1
+            if self._empty_polls >= _EMPTY_POLLS_BEFORE_GIVING_UP:
+                self._timer.stop()
+                _log.debug("Метаданных в манифесте нет — прекращаем опрос %s", self._variant_url)
             return
+
+        self._empty_polls = 0
 
         range_id = attrs.get("ID")
         if not range_id or range_id == self._last_range_id:
