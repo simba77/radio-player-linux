@@ -22,10 +22,7 @@ import pytest
 ROOT = Path(__file__).resolve().parent.parent
 
 pytestmark = pytest.mark.skipif(
-    subprocess.run(
-        [sys.executable, "-c", "import mpv"], capture_output=True, check=False
-    ).returncode
-    != 0,
+    subprocess.run([sys.executable, "-c", "import mpv"], capture_output=True, check=False).returncode != 0,
     reason="python-mpv недоступен — запускать приложение нечем",
 )
 
