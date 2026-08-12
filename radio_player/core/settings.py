@@ -10,8 +10,13 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from . import i18n, paths, storage
+from . import paths, storage
 from .models import SCHEMA_VERSION
+
+#: Языки интерфейса. `en` — исходные строки в коде, перевод для него не нужен.
+LANGUAGES = ("en", "ru")
+#: Значение настройки «как в системе».
+AUTO = "auto"
 
 #: Границы интервала обновления каталогов, часы.
 MIN_UPDATE_INTERVAL_HOURS = 1
@@ -27,7 +32,7 @@ class Settings:
     #: Дополнительные каталоги, добавленные пользователем поверх встроенных.
     extra_catalog_urls: list[str] = field(default_factory=list)
     #: Язык интерфейса: `auto` (как в системе) или код из `i18n.LANGUAGES`.
-    language: str = i18n.AUTO
+    language: str = AUTO
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -57,7 +62,7 @@ class Settings:
         ]
 
         language = data.get("language")
-        if language not in (i18n.AUTO, *i18n.LANGUAGES):
+        if language not in (AUTO, *LANGUAGES):
             language = cls.language
 
         return cls(

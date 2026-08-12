@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from radio_player import settings as settings_module
-from radio_player.settings import MAX_UPDATE_INTERVAL_HOURS, Settings
+from radio_player.core import settings as settings_module
+from radio_player.core.settings import MAX_UPDATE_INTERVAL_HOURS, Settings
 
 
 def test_defaults_when_file_missing():

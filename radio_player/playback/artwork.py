@@ -13,7 +13,7 @@ from PySide6.QtCore import QObject, QUrl, Signal
 from PySide6.QtGui import QImage
 from PySide6.QtNetwork import QNetworkAccessManager, QNetworkReply, QNetworkRequest
 
-from . import paths
+from ..core import paths
 
 #: Обложки крупнее не нужны: 300×300 — максимум, что просит UI.
 _MAX_BYTES = 2 * 1024 * 1024

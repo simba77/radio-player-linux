@@ -5,7 +5,7 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-from . import APP_ID, APP_RDNS_ID
+from .. import APP_ID, APP_RDNS_ID
 
 
 def _base(env_var: str, fallback: str) -> Path:

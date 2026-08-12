@@ -10,7 +10,7 @@ from __future__ import annotations
 from PySide6.QtCore import QObject
 from PySide6.QtNetwork import QNetworkInformation
 
-from .player import PlayerManager
+from ..playback.player import PlayerManager
 
 
 def install_network_monitor(player: PlayerManager, parent: QObject | None = None) -> bool:

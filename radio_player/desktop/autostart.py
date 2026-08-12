@@ -14,7 +14,8 @@ import sys
 import sysconfig
 from pathlib import Path
 
-from . import APP_ID, APP_NAME, paths
+from .. import APP_ID, APP_NAME
+from ..core import paths
 
 # Локализованные поля `.desktop` — часть формата, а не строки интерфейса:
 # среда сама выбирает нужный вариант по своей локали.

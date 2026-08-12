@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import json
 
-from radio_player import storage
+from radio_player.core import storage
 
 
 def test_load_state_returns_empty_dict_without_file():

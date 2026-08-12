@@ -71,7 +71,7 @@ ignore = [
 "tests/*" = ["S101", "S314"]
 # Имена методов и свойств здесь задаёт спецификация MPRIS: по ним приложение
 # находят на шине, переименовать их нельзя.
-"radio_player/mpris.py" = ["N802"]
+"radio_player/desktop/mpris.py" = ["N802"]
 
 [tool.ruff.lint.pep8-naming]
 # Имена переопределяемых методов Qt и обходчика ast выбраны не нами.
@@ -91,12 +91,12 @@ warn_redundant_casts = true
 
 [[tool.mypy.overrides]]
 module = [
-    "radio_player.models",
-    "radio_player.paths",
-    "radio_player.playlist_io",
-    "radio_player.settings",
-    "radio_player.storage",
-    "radio_player.metadata.hls_daterange",
+    "radio_player.core.models",
+    "radio_player.core.paths",
+    "radio_player.core.playlist_io",
+    "radio_player.core.settings",
+    "radio_player.core.storage",
+    "radio_player.playback.metadata.hls_daterange",
 ]
 strict = true
 
@@ -109,5 +109,5 @@ ignore_missing_imports = true
 # Стабы PySide6 местами расходятся с тем, что биндинг принимает на самом деле:
 # QByteArray не объявлен как буфер, типы Qt задаются строками ("QStringList"),
 # декоратор ClassInfo описан неверно. Это ошибки описания, а не нашего кода.
-module = ["radio_player.mpris", "radio_player.catalog", "radio_player.artwork"]
+module = ["radio_player.desktop.mpris", "radio_player.core.catalog", "radio_player.playback.artwork"]
 disable_error_code = ["call-overload", "arg-type", "call-arg", "operator"]

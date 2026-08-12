@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import pytest
 
-from radio_player import settings as settings_module
-from radio_player.settings_store import SettingsStore
+from radio_player.core import settings as settings_module
+from radio_player.core.settings_store import SettingsStore
 
 pytestmark = pytest.mark.usefixtures("qt_app")
 

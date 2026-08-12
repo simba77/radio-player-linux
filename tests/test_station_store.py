@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import pytest
 
-from radio_player.models import Catalog, Station
-from radio_player.station_store import StationStore
+from radio_player.core.models import Catalog, Station
+from radio_player.core.station_store import StationStore
 
 
 def catalog(*pairs: tuple[str, str], catalog_id: str = "test", revision: int = 1) -> Catalog:

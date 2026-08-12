@@ -10,14 +10,15 @@ import sys
 from PySide6.QtCore import QTimer
 from PySide6.QtWidgets import QApplication, QSystemTrayIcon
 
-from . import APP_ID, APP_NAME, APP_RDNS_ID, APP_VERSION, catalog, i18n, paths
-from .mpris import MprisServer
-from .network import install_network_monitor
-from .player import PlayerManager
-from .power import SleepInhibitor
-from .settings_store import SettingsStore
-from .single_instance import InstanceServer, notify_running_instance
-from .station_store import StationStore
+from . import APP_ID, APP_NAME, APP_RDNS_ID, APP_VERSION, i18n
+from .core import catalog, paths
+from .core.settings_store import SettingsStore
+from .core.station_store import StationStore
+from .desktop.mpris import MprisServer
+from .desktop.network import install_network_monitor
+from .desktop.power import SleepInhibitor
+from .desktop.single_instance import InstanceServer, notify_running_instance
+from .playback.player import PlayerManager
 from .ui.main_window import MainWindow
 from .ui.tray import TrayIcon
 

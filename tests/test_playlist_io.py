@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import json
 
-from radio_player import playlist_io
-from radio_player.models import Station
+from radio_player.core import playlist_io
+from radio_player.core.models import Station
 
 M3U = """#EXTM3U
 #EXTINF:-1,Radio Record — Main

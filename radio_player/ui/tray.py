@@ -14,7 +14,7 @@ from PySide6.QtGui import QIcon
 from PySide6.QtWidgets import QMenu, QSystemTrayIcon
 
 from .. import APP_NAME
-from ..player import PlayerManager
+from ..playback.player import PlayerManager
 
 #: Иконки из системной темы. Свои symbolic-иконки появятся в M3.
 _ICON_PLAYING = "media-playback-start"

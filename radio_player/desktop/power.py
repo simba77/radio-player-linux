@@ -20,8 +20,8 @@ import logging
 from PySide6.QtCore import Q_ARG, QCoreApplication, QMetaObject, QObject, Slot
 from PySide6.QtDBus import QDBusConnection, QDBusInterface, QDBusMessage, QDBusPendingCallWatcher
 
-from . import APP_NAME
-from .player import PlayerManager
+from .. import APP_NAME
+from ..playback.player import PlayerManager
 
 _SERVICE = "org.freedesktop.PowerManagement"
 _PATH = "/org/freedesktop/PowerManagement/Inhibit"

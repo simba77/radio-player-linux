@@ -25,7 +25,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from ..player import PlayerManager
+from ..playback.player import PlayerManager
 from . import icons
 
 ARTWORK_SIZE = 72

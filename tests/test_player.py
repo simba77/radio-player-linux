@@ -12,9 +12,9 @@ from __future__ import annotations
 
 import pytest
 
-from radio_player import storage
-from radio_player.models import Station
-from radio_player.player import PlaybackState, PlayerManager
+from radio_player.core import storage
+from radio_player.core.models import Station
+from radio_player.playback.player import PlaybackState, PlayerManager
 
 pytestmark = pytest.mark.usefixtures("qt_app")
 
@@ -397,7 +397,7 @@ def test_shutdown_releases_everything(player, mpv):
 
 def test_reconnect_pause_grows_with_each_failure(player, mpv, monkeypatch):
     """Сервер радио может лежать часами — стучаться каждые три секунды невежливо."""
-    from radio_player import player as player_module
+    from radio_player.playback import player as player_module
 
     monkeypatch.setattr(player_module, "_with_jitter", int)
     start_playing(player, mpv)
@@ -412,7 +412,7 @@ def test_reconnect_pause_grows_with_each_failure(player, mpv, monkeypatch):
 
 
 def test_reconnect_pause_stops_at_the_ceiling(player, mpv, monkeypatch):
-    from radio_player import player as player_module
+    from radio_player.playback import player as player_module
 
     monkeypatch.setattr(player_module, "_with_jitter", int)
     start_playing(player, mpv)
@@ -425,7 +425,7 @@ def test_reconnect_pause_stops_at_the_ceiling(player, mpv, monkeypatch):
 
 def test_reconnect_pause_starts_over_after_a_new_break(player, mpv, monkeypatch):
     """Связь восстановилась — накопленная задержка больше не про эту ситуацию."""
-    from radio_player import player as player_module
+    from radio_player.playback import player as player_module
 
     monkeypatch.setattr(player_module, "_with_jitter", int)
     start_playing(player, mpv)
@@ -438,7 +438,7 @@ def test_reconnect_pause_starts_over_after_a_new_break(player, mpv, monkeypatch)
 
 
 def test_jitter_stays_within_the_declared_spread():
-    from radio_player.player import RECONNECT_JITTER, _with_jitter
+    from radio_player.playback.player import RECONNECT_JITTER, _with_jitter
 
     values = {_with_jitter(10_000) for _ in range(200)}
     assert min(values) >= 10_000 * (1 - RECONNECT_JITTER)

@@ -15,10 +15,11 @@ from pathlib import Path
 
 from PySide6.QtCore import QCoreApplication, QLibraryInfo, QLocale, QTranslator
 
-#: Языки интерфейса. `en` — исходные строки, перевод для него не нужен.
-LANGUAGES = ("en", "ru")
-#: Значение настройки «как в системе».
-AUTO = "auto"
+# Допустимые значения настройки языка живут в домене; здесь они только
+# используются, но переэкспортируются — так их видит и интерфейс.
+from .core.settings import AUTO, LANGUAGES
+
+__all__ = ["AUTO", "LANGUAGES", "install", "prepare", "resolve"]
 
 _TRANSLATIONS_DIR = Path(__file__).parent / "resources" / "i18n"
 

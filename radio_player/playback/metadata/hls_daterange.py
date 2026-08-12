@@ -18,7 +18,7 @@ from urllib.parse import urljoin
 from PySide6.QtCore import QObject, QTimer, QUrl
 from PySide6.QtNetwork import QNetworkAccessManager, QNetworkReply, QNetworkRequest
 
-from ..models import Station, TrackInfo
+from ...core.models import Station, TrackInfo
 from . import MetadataProvider
 
 #: Как часто опрашивать манифест. Сегменты по ~6 с, чаще смысла нет.

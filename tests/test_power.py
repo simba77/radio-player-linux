@@ -13,7 +13,7 @@ pytest.importorskip("PySide6.QtDBus")
 
 from PySide6.QtCore import QObject, Signal
 
-from radio_player.power import SleepInhibitor
+from radio_player.desktop.power import SleepInhibitor
 
 pytestmark = pytest.mark.usefixtures("qt_app")
 

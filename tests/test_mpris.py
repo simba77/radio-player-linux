@@ -14,8 +14,8 @@ pytest.importorskip("PySide6.QtDBus")
 from PySide6.QtCore import QObject, Signal
 from PySide6.QtGui import QImage
 
-from radio_player import mpris
-from radio_player.models import Station, TrackInfo
+from radio_player.core.models import Station, TrackInfo
+from radio_player.desktop import mpris
 
 pytestmark = pytest.mark.usefixtures("qt_app")
 

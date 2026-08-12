@@ -22,8 +22,8 @@ from PySide6.QtDBus import (
     QDBusObjectPath,
 )
 
-from . import APP_NAME, APP_RDNS_ID
-from .player import PlayerManager
+from .. import APP_NAME, APP_RDNS_ID
+from ..playback.player import PlayerManager
 
 #: Спецификация просит, чтобы имя на шине совпадало с именем `.desktop`-файла.
 BUS_NAME = f"org.mpris.MediaPlayer2.{APP_RDNS_ID}"

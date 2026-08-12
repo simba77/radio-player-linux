@@ -8,8 +8,8 @@ from __future__ import annotations
 
 import json
 
-from radio_player import catalog as catalog_module
-from radio_player.models import Catalog, Overlay, Station
+from radio_player.core import catalog as catalog_module
+from radio_player.core.models import Catalog, Overlay, Station
 
 VALID = {
     "schema": 1,

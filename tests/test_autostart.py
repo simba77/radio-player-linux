@@ -6,7 +6,8 @@
 
 from __future__ import annotations
 
-from radio_player import autostart, paths
+from radio_player.core import paths
+from radio_player.desktop import autostart
 
 
 def test_disabled_by_default():

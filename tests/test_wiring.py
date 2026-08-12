@@ -12,10 +12,10 @@ import json
 
 import pytest
 
-from radio_player import catalog
 from radio_player.__main__ import wire_catalog_sources
-from radio_player.settings_store import SettingsStore
-from radio_player.station_store import StationStore
+from radio_player.core import catalog
+from radio_player.core.settings_store import SettingsStore
+from radio_player.core.station_store import StationStore
 
 pytestmark = pytest.mark.usefixtures("qt_app")
 

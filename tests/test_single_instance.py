@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import pytest
 
-from radio_player import single_instance
+from radio_player.desktop import single_instance
 
 pytestmark = pytest.mark.usefixtures("qt_app")
 

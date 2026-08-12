@@ -9,11 +9,11 @@ from __future__ import annotations
 
 import pytest
 
-from radio_player.metadata.hls_daterange import (
+from radio_player.core.models import TrackInfo
+from radio_player.playback.metadata.hls_daterange import (
     _EMPTY_POLLS_BEFORE_GIVING_UP,
     HlsDaterangeProvider,
 )
-from radio_player.models import TrackInfo
 
 pytestmark = pytest.mark.usefixtures("qt_app")
 

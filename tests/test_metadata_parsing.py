@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import json
 
-from radio_player.metadata.hls_daterange import _extract_cover, _parse_daterange
-from radio_player.models import split_icy_title
+from radio_player.core.models import split_icy_title
+from radio_player.playback.metadata.hls_daterange import _extract_cover, _parse_daterange
 
 VARIANT_PLAYLIST = """#EXTM3U
 #EXT-X-VERSION:3

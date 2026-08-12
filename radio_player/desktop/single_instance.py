@@ -18,7 +18,7 @@ from collections.abc import Callable
 from PySide6.QtCore import QObject
 from PySide6.QtNetwork import QLocalServer, QLocalSocket
 
-from . import IPC_SOCKET_NAME
+from .. import IPC_SOCKET_NAME
 
 #: Команда второго экземпляра: показать окно, вот токен активации (может быть пуст).
 _SHOW_COMMAND = "show"

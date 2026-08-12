@@ -19,10 +19,10 @@ from PySide6.QtWidgets import (
 )
 
 from .. import APP_NAME
-from ..catalog import CatalogUpdater
-from ..player import PlayerManager
-from ..settings_store import SettingsStore
-from ..station_store import StationStore
+from ..core.catalog import CatalogUpdater
+from ..core.settings_store import SettingsStore
+from ..core.station_store import StationStore
+from ..playback.player import PlayerManager
 from . import icons
 from .settings_dialog import SettingsDialog
 from .widgets import NowPlayingWidget

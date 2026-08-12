@@ -26,10 +26,10 @@ from typing import Any, Protocol
 from PySide6.QtCore import QCoreApplication, QObject, QTimer, Signal, Slot
 from PySide6.QtGui import QImage
 
-from . import storage
+from ..core import storage
+from ..core.models import Station, TrackInfo
 from .artwork import ArtworkLoader
 from .metadata import MetadataProvider, make_provider
-from .models import Station, TrackInfo
 
 #: Первая пауза между попытками переподключения — как на macOS.
 RECONNECT_INTERVAL_MS = 3000

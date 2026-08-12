@@ -11,7 +11,7 @@ from typing import Any
 
 from PySide6.QtCore import QObject, Signal
 
-from ..models import Station, TrackInfo
+from ...core.models import Station, TrackInfo
 
 
 class MetadataProvider(QObject):

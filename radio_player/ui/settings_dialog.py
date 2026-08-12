@@ -30,11 +30,13 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from .. import autostart, catalog, i18n, playlist_io
-from ..models import Catalog
-from ..settings import MAX_UPDATE_INTERVAL_HOURS, MIN_UPDATE_INTERVAL_HOURS
-from ..settings_store import SettingsStore
-from ..station_store import StationStore
+from .. import i18n
+from ..core import catalog, playlist_io
+from ..core.models import Catalog
+from ..core.settings import MAX_UPDATE_INTERVAL_HOURS, MIN_UPDATE_INTERVAL_HOURS
+from ..core.settings_store import SettingsStore
+from ..core.station_store import StationStore
+from ..desktop import autostart
 
 #: Роль Qt для хранения id станции в строке списка.
 _STATION_ID_ROLE = int(Qt.ItemDataRole.UserRole)

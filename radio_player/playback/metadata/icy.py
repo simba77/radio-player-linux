@@ -12,7 +12,7 @@ from typing import Any
 
 from PySide6.QtCore import QObject, Signal, Slot
 
-from ..models import Station, split_icy_title
+from ...core.models import Station, split_icy_title
 from . import MetadataProvider
 
 
