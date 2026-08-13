@@ -32,7 +32,7 @@ jobs:
           sudo apt-get install -y --no-install-recommends \
             python3-venv libmpv2 \
             libegl1 libgl1 libxkbcommon0 libdbus-1-3 libfontconfig1 \
-            desktop-file-utils appstream shellcheck
+            desktop-file-utils appstream
 
       - name: Create the development environment
         run: make devenv
@@ -47,6 +47,12 @@ jobs:
       - name: Lint
         run: make lint
 
+      # shellcheck берётся из .venv, а не из apt: иначе версия на раннере
+      # и версия в pre-commit расходятся, и CI краснеет на том, что локально
+      # проходило.
+      - name: Check the shell scripts
+        run: make shellcheck
+
       - name: Typecheck
         run: make typecheck
 
@@ -54,9 +60,6 @@ jobs:
       # и порог покрытия.
       - name: Test
         run: make coverage
-
-      - name: Check the shell scripts
-        run: shellcheck scripts/*.sh
 
       - name: Validate the desktop entry and AppStream data
         run: |

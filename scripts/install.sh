@@ -48,10 +48,12 @@ cp "$source_root/packaging/appstream/io.github.simba77.RadioPlayer.metainfo.xml"
 
 # Кэши оболочки: без обновления ярлык и иконка появятся только после перелогина.
 # Команд может не быть — установка от этого не должна падать.
-command -v update-desktop-database >/dev/null 2>&1 && [ -z "$DESTDIR" ] &&
+if [ -z "$DESTDIR" ] && command -v update-desktop-database >/dev/null 2>&1; then
     update-desktop-database "$appdir" 2>/dev/null || true
-command -v gtk-update-icon-cache >/dev/null 2>&1 && [ -z "$DESTDIR" ] &&
+fi
+if [ -z "$DESTDIR" ] && command -v gtk-update-icon-cache >/dev/null 2>&1; then
     gtk-update-icon-cache -q -t -f "$icondir" 2>/dev/null || true
+fi
 
 echo "Установлено в $PREFIX"
 case ":$PATH:" in

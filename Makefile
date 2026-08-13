@@ -18,16 +18,17 @@ LUPDATE ?= $(shell command -v pyside6-lupdate 2>/dev/null || echo /usr/lib/qt6/b
 LANGUAGES := ru en
 SCANNED_LANGUAGES := ru
 
-.PHONY: help run probe deps deps-i18n devenv check lint format typecheck test coverage icons i18n-update i18n-release install uninstall deb clean
+.PHONY: help run probe deps deps-i18n devenv check lint shellcheck format typecheck test coverage icons i18n-update i18n-release install uninstall deb clean
 
 help:
 	@echo "make deps      — установить системные зависимости (нужен sudo)"
 	@echo "make deps-i18n — инструменты для работы над переводами (нужен sudo)"
 	@echo "make devenv    — создать .venv с инструментами разработки"
-	@echo "make check     — линтер, типы и тесты разом"
+	@echo "make check     — линтер, скрипты, типы и тесты разом"
 	@echo "make run       — запустить приложение"
 	@echo "make probe     — диагностика метаданных живого потока"
 	@echo "make lint      — ruff: правила и форматирование"
+	@echo "make shellcheck — shellcheck для скриптов установки"
 	@echo "make typecheck — mypy"
 	@echo "make format    — отформатировать код и починить, что чинится само"
 	@echo "make test      — pytest"
@@ -59,11 +60,14 @@ run:
 probe:
 	$(PYTHON) scripts/probe_metadata.py $(URL)
 
-check: lint typecheck test
+check: lint shellcheck typecheck test
 
 lint: $(VENV_PY)
 	$(VENV)/bin/ruff check .
 	$(VENV)/bin/ruff format --check .
+
+shellcheck: $(VENV_PY)
+	$(VENV)/bin/shellcheck scripts/*.sh
 
 format: $(VENV_PY)
 	$(VENV)/bin/ruff format .
