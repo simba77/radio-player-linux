@@ -1,5 +1,5 @@
-radio-player (0.1.0) unstable; urgency=medium
+radio-player (1.0.0) unstable; urgency=medium
 
-  * Initial release.
+  * First public release.
 
- -- simba77 <itenterprise105@gmail.com>  Tue, 11 Aug 2026 00:00:00 +0300
+ -- simba77 <itenterprise105@gmail.com>  Thu, 13 Aug 2026 00:00:00 +0300

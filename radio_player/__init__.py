@@ -9,6 +9,8 @@ APP_ID = "radio-player"
 #: с иконкой в Wayland и приём приложения в Flathub.
 APP_RDNS_ID = "io.github.simba77.RadioPlayer"
 APP_NAME = "Radio Player"
-APP_VERSION = "0.1.0"
+#: Единственный источник версии: pyproject, changelog пакета и AppStream
+#: сверяются с ним тестом `tests/test_version.py`.
+APP_VERSION = "1.0.0"
 
 __all__ = ["APP_ID", "APP_NAME", "APP_RDNS_ID", "APP_VERSION"]
