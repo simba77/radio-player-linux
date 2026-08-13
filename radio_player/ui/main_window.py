@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import os
 
 from PySide6.QtCore import QSize, Qt
@@ -26,6 +27,8 @@ from ..playback.player import PlayerManager
 from . import icons
 from .settings import SettingsDialog
 from .widgets import NowPlayingWidget
+
+_log = logging.getLogger(__name__)
 
 #: Роль Qt (`Qt.UserRole`) для хранения id станции в элементе списка.
 _STATION_ID_ROLE = int(Qt.ItemDataRole.UserRole)
@@ -189,7 +192,27 @@ class MainWindow(QWidget):
         self.hide()
 
     def toggle_visibility(self) -> None:
-        if self.isVisible() and not self.isMinimized():
+        """Клик по иконке в трее: спрятать окно, если с ним работают, иначе показать.
+
+        Ориентироваться на `isMinimized()` нельзя: в xdg-shell нет состояния
+        «свёрнуто», о сворачивании клиенту не сообщают, и на Wayland свёрнутое
+        окно выглядит для Qt как обычное видимое (проверено на Plasma 6:
+        `isVisible()` True, `isMinimized()` False даже сразу после
+        `showMinimized()`). Прежнее условие поэтому прятало в трей окно,
+        которое пользователь только что свернул и хотел вернуть.
+
+        Активность окна композитор сообщает честно, и она же отвечает вопросу
+        пользователя: спрятать имеет смысл то, что сейчас перед глазами, а
+        свёрнутое или перекрытое чужим окном по клику должно подниматься.
+        """
+        _log.debug(
+            "клик по трею: visible=%s active=%s minimized=%s token=%s",
+            self.isVisible(),
+            self.isActiveWindow(),
+            self.isMinimized(),
+            bool(os.environ.get("XDG_ACTIVATION_TOKEN")),
+        )
+        if self.isVisible() and self.isActiveWindow():
             self.hide()
         else:
             self.show_and_raise()
@@ -202,6 +225,12 @@ class MainWindow(QWidget):
         активации, поэтому переменную ставим прямо перед ней и сразу убираем —
         чужой токен, оставленный в окружении, был бы уже недействителен.
         Без токена (X11, запуск из терминала) окно просто поднимется как раньше.
+
+        Свёрнутое окно возвращает именно активация: развернуть себя клиент
+        на Wayland не может, а вот композитор, активируя окно, разворачивает
+        его сам (проверено скриптом KWin). Прятать и показывать окно заново
+        для этого нельзя: KWin запоминает свёрнутость по приложению и вернёт
+        её новому окну — оно мелькнёт и исчезнет.
         """
         if activation_token:
             os.environ["XDG_ACTIVATION_TOKEN"] = activation_token

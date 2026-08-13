@@ -66,6 +66,18 @@ argument as a raw type (`QDBusRawType<0x617b73767d>*`) that has no Python counte
 legacy `org.freedesktop.PowerManagement.Inhibit` stays the only backend, and a future Flatpak
 build has to be granted `--talk-name=org.freedesktop.PowerManagement` rather than use the portal.
 
+**A Wayland window does not know it was minimized.** xdg-shell has no such state, so on Plasma 6
+`isVisible()` stays True and `isMinimized()` stays False even right after `showMinimized()` — the
+compositor configures the state away and Qt reverts to `WindowNoState` (measured with a KWin
+script watching `minimizedChanged`). Toggling the window from the tray must therefore key off
+`isActiveWindow()`. Restoring it is the compositor's job: `showNormal()` does nothing, but
+activation unminimizes the window, and plasmashell hands out an activation token through
+`ProvideXdgActivationToken` right before it calls `Activate` on the tray icon — Qt puts it into
+the environment, so a plain `activateWindow()` from the tray handler works. What must not be done
+is hiding and showing the window to restore it: KWin remembers the minimized state per
+application and applies it to the fresh window, which then flashes and vanishes (the same memory
+makes a freshly started instance come up minimized).
+
 **System sleep must be inhibited explicitly** (`power.py`): neither libmpv nor an active MPRIS
 player holds the system awake, and idle auto-suspend cuts the stream off.
 

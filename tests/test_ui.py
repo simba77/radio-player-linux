@@ -157,6 +157,64 @@ def test_volume_slider_follows_external_changes(app_parts):
     assert slider.value() == 37
 
 
+# MARK: - Показ и скрытие окна
+
+
+def _pretend(window, *, visible: bool, active: bool) -> None:
+    """Подменяет ответы Qt о состоянии окна.
+
+    Offscreen-платформа не умеет активировать окна, а на Wayland «свёрнуто»
+    вообще неотличимо от «видимо» — оба состояния приходится задавать руками.
+    """
+    window.isVisible = lambda: visible  # type: ignore[method-assign]
+    window.isActiveWindow = lambda: active  # type: ignore[method-assign]
+
+
+def test_tray_click_hides_the_window_being_used(app_parts):
+    window, *_ = app_parts
+    _pretend(window, visible=True, active=True)
+    calls = []
+    window.hide = lambda: calls.append("hide")  # type: ignore[method-assign]
+
+    window.toggle_visibility()
+
+    assert calls == ["hide"]
+
+
+def test_tray_click_raises_a_minimized_window(app_parts):
+    """Регрессия: свёрнутое окно пряталось в трей вместо того, чтобы вернуться.
+
+    На Wayland свёрнутое окно выглядит для Qt видимым и не минимизированным,
+    поэтому прежнее условие `isVisible() and not isMinimized()` уводило его
+    в трей, и клик по иконке приходилось делать дважды.
+    """
+    window, *_ = app_parts
+    _pretend(window, visible=True, active=False)
+    calls = []
+    window.showNormal = lambda: calls.append("showNormal")  # type: ignore[method-assign]
+    window.activateWindow = lambda: calls.append("activate")  # type: ignore[method-assign]
+    window.hide = lambda: calls.append("hide")  # type: ignore[method-assign]
+
+    window.toggle_visibility()
+
+    # Разворачивает окно активация; переоткрывать его нельзя — KWin вернёт
+    # новому окну запомненную свёрнутость, и оно мелькнёт и исчезнет.
+    assert calls == ["showNormal", "activate"]
+
+
+def test_tray_click_shows_a_window_hidden_to_tray(app_parts):
+    window, *_ = app_parts
+    _pretend(window, visible=False, active=False)
+    calls = []
+    window.showNormal = lambda: calls.append("showNormal")  # type: ignore[method-assign]
+    window.activateWindow = lambda: calls.append("activate")  # type: ignore[method-assign]
+    window.hide = lambda: calls.append("hide")  # type: ignore[method-assign]
+
+    window.toggle_visibility()
+
+    assert calls == ["showNormal", "activate"]
+
+
 # MARK: - Настройки
 
 

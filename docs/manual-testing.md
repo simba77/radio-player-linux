@@ -34,6 +34,7 @@ Plasma only; on GNOME confirm the *absence* is handled (2.4).
 | 2.1 | Start playback | Tray icon switches to the playing state |
 | 2.2 | Break the network (turn off Wi-Fi) during playback | Icon blinks at ~600 ms while reconnecting; restore the network → playback resumes on its own |
 | 2.3 | Tray menu: play/pause, next, previous, quit | All work; the menu reflects the current station |
+| 2.3a | Minimize the window to the task bar, focus another app, click the tray icon | The window comes back and takes focus — it must not hide, and must not flash and vanish. On Wayland this depends on the activation token plasmashell sends before `Activate`; `--log-level=debug` prints `token=` on every tray click |
 | 2.4 | GNOME without AppIndicator | No tray, and the app says so in the log; the window and MPRIS remain fully usable, closing the window does not strand the app invisibly |
 
 ## 3. MPRIS and media keys
