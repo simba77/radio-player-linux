@@ -134,6 +134,9 @@ Developed and verified on KDE neon (Plasma 6, Wayland). On GNOME the system tray
 without the AppIndicator extension — there the app runs as a window and through MPRIS, with no
 panel icon.
 
+Tray, media keys and sleep inhibition cannot be covered by headless tests; the per-desktop
+checklist for them is [docs/manual-testing.md](docs/manual-testing.md).
+
 ## Architecture
 
 Data model, the two metadata providers and the playback state machine are described in
