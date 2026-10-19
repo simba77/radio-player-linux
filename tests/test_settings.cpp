@@ -89,9 +89,9 @@ TEST_CASE("settings from a future version fall back to defaults")
     CHECK(QFile::exists(paths::configDir() + u"/settings.bak-v99"_s));
 }
 
-TEST_CASE("files written by the Python version are read the same way")
+TEST_CASE("files written by version 1.x are read the same way")
 {
-    // Python-версия писала отступ в два пробела и ключи в своём порядке;
+    // Версии 1.x на Python писали отступ в два пробела и ключи в своём порядке;
     // для разбора это не должно иметь значения.
     test::writeFile(paths::settingsFile(), R"({
   "schema": 1,

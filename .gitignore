@@ -1,12 +1,6 @@
-__pycache__/
-*.py[cod]
 .venv/
-venv/
 build/
 dist/
-*.egg-info/
-.pytest_cache/
-.ruff_cache/
 .idea/
 
 # Рабочие файлы Claude Code, включая PLAN.md — в репозиторий не идут.

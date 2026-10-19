@@ -131,7 +131,7 @@ TEST_CASE("the cache file keeps the webp extension")
     CHECK(ArtworkLoader::cachePath(u"https://example.org/a.jpeg"_s).endsWith(".jpg"_L1));
 }
 
-TEST_CASE("artwork cached by the Python version is found")
+TEST_CASE("artwork cached by version 1.x is found")
 {
     // Имя — sha1 адреса, как и раньше: обложки переживают обновление.
     CHECK(ArtworkLoader::cachePath(u"https://example.org/cover.jpg"_s)

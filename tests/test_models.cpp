@@ -198,7 +198,7 @@ TEST_CASE("an overlay survives a roundtrip")
     CHECK(restored.custom[0].id == "local:1"_L1);
 }
 
-TEST_CASE("an overlay keeps the file format of the Python version")
+TEST_CASE("an overlay keeps the file format of version 1.x")
 {
     // Оверлей переживает переход между версиями: переименование хранится
     // объектом с полем `name`, а не строкой.

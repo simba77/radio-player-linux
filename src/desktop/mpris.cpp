@@ -215,9 +215,9 @@ void MprisServer::emitProperties(const QVariantMap &changed)
         return;
     QDBusMessage message = QDBusMessage::createSignal(QLatin1String(MPRIS_OBJECT_PATH), PROPERTIES_INTERFACE,
                                                       u"PropertiesChanged"_s);
-    // Третий аргумент — список строк (`as`). В Python-версии пустой список уходил
-    // массивом вариантов, и Plasma молча игнорировала такой сигнал; QStringList
-    // маршалится как `as` сам.
+    // Третий аргумент — список строк (`as`), а не вариантов (`av`): сигнал
+    // с сигнатурой `sa{sv}av` Plasma молча игнорирует, и плеер не попадает
+    // в апплет. QStringList маршалится как `as` сам — список вариантов сюда нельзя.
     message << PLAYER_INTERFACE << changed << QStringList();
     connection_.send(message);
 }

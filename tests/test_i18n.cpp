@@ -24,7 +24,7 @@ namespace {
 
 QString catalogPath(const QString &language)
 {
-    return test::sourcePath(u"translations/cpp/radio_player_%1.ts"_s.arg(language));
+    return test::sourcePath(u"translations/radio_player_%1.ts"_s.arg(language));
 }
 
 struct Message {
@@ -135,7 +135,7 @@ TEST_CASE("there are no unfinished translations")
 TEST_CASE("the translation catalog matches the code")
 {
     // Каждая строка из tr() должна быть в .ts, и ничего лишнего, — иначе забыли
-    // `make cpp-i18n-update`. Сверяемся с тем, что извлёк бы сам lupdate.
+    // `make i18n-update`. Сверяемся с тем, что извлёк бы сам lupdate.
     const QString fresh = test::tempDir() + u"/radio_player_ru.ts"_s;
     QProcess lupdate;
     lupdate.start(QStringLiteral(RADIO_LUPDATE),

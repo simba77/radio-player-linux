@@ -1,5 +1,5 @@
 #!/bin/sh
-# Удаление приложения, установленного scripts/install.sh.
+# Удаление приложения, установленного `make install`.
 #
 #   PREFIX — откуда удалять (по умолчанию ~/.local)
 set -eu
@@ -7,8 +7,10 @@ set -eu
 PREFIX="${PREFIX:-$HOME/.local}"
 config_home="${XDG_CONFIG_HOME:-$HOME/.config}"
 
+# Каталог с пакетом версий 1.x на Python — его оставила их установка.
 rm -rf "$PREFIX/lib/radio-player"
 rm -f "$PREFIX/bin/radio-player"
+rm -rf "$PREFIX/share/doc/radio-player"
 rm -f "$PREFIX/share/applications/io.github.simba77.RadioPlayer.desktop"
 # Имя из версий до перехода на reverse-DNS.
 rm -f "$PREFIX/share/applications/radio-player.desktop"

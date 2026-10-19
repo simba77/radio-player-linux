@@ -53,8 +53,8 @@ target_link_libraries(radio_core PUBLIC Qt6::Core Qt6::Network)
 # Встроенная копия каталога: приложение работает сразу и без сети.
 qt_add_resources(radio_core "catalogs"
     PREFIX "/catalogs"
-    BASE radio_player/resources/catalogs
-    FILES radio_player/resources/catalogs/record.json
+    BASE data/catalogs
+    FILES data/catalogs/record.json
 )
 
 # Воспроизведение: libmpv, состояния плеера, метаданные и обложки. Окон не знает.
@@ -98,14 +98,14 @@ target_link_libraries(radio_ui PUBLIC radio_desktop Qt6::Widgets)
 # Иконка приложения на случай запуска без установки: в теме её ещё нет.
 qt_add_resources(radio_ui "icons"
     PREFIX "/icons"
-    BASE radio_player/resources/icons/hicolor/scalable/apps
-    FILES radio_player/resources/icons/hicolor/scalable/apps/io.github.simba77.RadioPlayer.svg
+    BASE data/icons/hicolor/scalable/apps
+    FILES data/icons/hicolor/scalable/apps/io.github.simba77.RadioPlayer.svg
 )
 
 # Переводы собираются при сборке и встраиваются в программу. Английский каталог
 # содержит только формы множественного числа: исходные строки уже английские.
-set(RADIO_TS_RU ${CMAKE_SOURCE_DIR}/translations/cpp/radio_player_ru.ts)
-set(RADIO_TS_EN ${CMAKE_SOURCE_DIR}/translations/cpp/radio_player_en.ts)
+set(RADIO_TS_RU ${CMAKE_SOURCE_DIR}/translations/radio_player_ru.ts)
+set(RADIO_TS_EN ${CMAKE_SOURCE_DIR}/translations/radio_player_en.ts)
 qt_add_lrelease(radio_ui TS_FILES ${RADIO_TS_RU} ${RADIO_TS_EN} QM_FILES_OUTPUT_VARIABLE RADIO_QM_FILES)
 qt_add_resources(radio_ui "translations"
     PREFIX "/i18n"
@@ -135,10 +135,10 @@ target_link_libraries(radio-player PRIVATE radio_app)
 # команду по имени, поэтому годится и /usr, и ~/.local.
 include(GNUInstallDirs)
 install(TARGETS radio-player RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
-install(FILES radio_player/resources/io.github.simba77.RadioPlayer.desktop
+install(FILES data/io.github.simba77.RadioPlayer.desktop
     DESTINATION ${CMAKE_INSTALL_DATADIR}/applications)
 # Иконки темы hicolor: без них оболочка покажет приложение безымянным квадратом.
-install(DIRECTORY radio_player/resources/icons/hicolor DESTINATION ${CMAKE_INSTALL_DATADIR}/icons)
+install(DIRECTORY data/icons/hicolor DESTINATION ${CMAKE_INSTALL_DATADIR}/icons)
 # AppStream: по нему приложение видно в Discover и GNOME Software.
 install(FILES packaging/appstream/io.github.simba77.RadioPlayer.metainfo.xml
     DESTINATION ${CMAKE_INSTALL_DATADIR}/metainfo)

@@ -25,8 +25,7 @@ namespace catalog {
 QStringList defaultCatalogUrls()
 {
     return {
-        u"https://raw.githubusercontent.com/simba77/radio-player-linux/main/"
-        u"radio_player/resources/catalogs/record.json"_s,
+        u"https://raw.githubusercontent.com/simba77/radio-player-linux/main/data/catalogs/record.json"_s,
     };
 }
 

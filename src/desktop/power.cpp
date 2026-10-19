@@ -94,8 +94,8 @@ void SleepInhibitor::drop(bool waitForDelivery)
     if (!cookie_)
         return;
     QDBusMessage call = QDBusMessage::createMethodCall(SERVICE, PATH, INTERFACE, u"UnInhibit"_s);
-    // `UnInhibit` требует uint32: в Python-версии это обходили через метаобъект,
-    // здесь тип задаётся самим значением.
+    // `UnInhibit` требует uint32: тип задаётся самим значением. Число по умолчанию
+    // ушло бы int32, и вызов отлетел бы с UnknownMethod.
     call << *std::exchange(cookie_, std::nullopt);
     // Ожидание крутит цикл событий, а не блокирует его: служба может жить
     // в этом же процессе (так устроены тесты).

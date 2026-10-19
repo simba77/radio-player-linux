@@ -16,70 +16,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  check:
-    runs-on: ubuntu-24.04
-    env:
-      # Дисплея на раннере нет, а тестам Qt хватает offscreen-платформы.
-      QT_QPA_PLATFORM: offscreen
-
-    steps:
-      - uses: actions/checkout@v4
-
-      # libmpv нужен настоящий: без него тест запуска приложения пропускается.
-      # Остальное — системные библиотеки, на которые опирается Qt из колеса.
-      - name: Install system dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends \
-            python3-venv libmpv2 \
-            libegl1 libgl1 libxkbcommon0 libdbus-1-3 libfontconfig1 \
-            desktop-file-utils appstream
-
-      - name: Create the development environment
-        run: make devenv
-
-      # На машине разработчика (KDE neon) PySide6 и python-mpv приходят из
-      # пакетов дистрибутива, поэтому .venv и создаётся с --system-site-packages.
-      # В Ubuntu 24.04 пакетов python3-pyside6.* нет вовсе, так что здесь берём
-      # колёса с PyPI. Оно же несёт плагин SVG и переводы Qt.
-      - name: Install the runtime dependencies from PyPI
-        run: .venv/bin/pip install --quiet PySide6 python-mpv
-
-      - name: Lint
-        run: make lint
-
-      # shellcheck берётся из .venv, а не из apt: иначе версия на раннере
-      # и версия в pre-commit расходятся, и CI краснеет на том, что локально
-      # проходило.
-      - name: Check the shell scripts
-        run: make shellcheck
-
-      - name: Typecheck
-        run: make typecheck
-
-      # Сюда же входит проверка каталога переводов на дрейф от кода
-      # и порог покрытия.
-      - name: Test
-        run: make coverage
-
-      - name: Validate the desktop entry and AppStream data
-        run: |
-          desktop-file-validate radio_player/resources/io.github.simba77.RadioPlayer.desktop
-          appstreamcli validate --no-net \
-            packaging/appstream/io.github.simba77.RadioPlayer.metainfo.xml
-
-      # Упаковка ломается тише кода: заметить это до релиза можно только сборкой.
-      - name: Build the package
-        run: make deb
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: deb
-          path: dist/*.deb
-          if-no-files-found: error
-
-  # C++-версия, которая заменит Python. Пока они живут рядом, у неё свой job.
-  cpp:
+  build:
     runs-on: ubuntu-24.04
 
     steps:
@@ -92,43 +29,44 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
             cmake ninja-build g++ pkg-config dpkg-dev file qt6-base-dev qt6-tools-dev qt6-l10n-tools \
-            libqt6svg6 libmpv-dev catch2 dbus python3-venv
+            libqt6svg6 libmpv-dev catch2 dbus desktop-file-utils appstream
 
       - name: Configure
-        run: cmake -S . -B build/cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS=-Werror
+        run: cmake -S . -B build/release -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS=-Werror
 
       - name: Build
-        run: cmake --build build/cmake
+        run: cmake --build build/release
 
       # Тесты MPRIS и запрета засыпания поднимают свой dbus-daemon: сеансовой
       # шины на раннере нет, а проверять сигнатуры нужно на настоящей.
       - name: Test
-        run: ctest --test-dir build/cmake --output-on-failure -j "$(nproc)"
+        run: ctest --test-dir build/release --output-on-failure -j "$(nproc)"
 
-      # clang-format берётся из .venv, как и ruff: версия закреплена в
-      # requirements-dev.txt, и CI раскладывает код так же, как машина разработчика.
-      - name: Check formatting
+      - name: Validate the desktop entry and AppStream data
         run: |
-          make devenv
-          make cpp-lint
+          desktop-file-validate data/io.github.simba77.RadioPlayer.desktop
+          appstreamcli validate --no-net \
+            packaging/appstream/io.github.simba77.RadioPlayer.metainfo.xml
 
       # Собранные на 24.04 пакеты ставятся и там, и на более новых системах:
       # зависимости от Qt dpkg-shlibdeps выводит по самой старой версии.
       - name: Build packages
-        working-directory: build/cmake
+        working-directory: build/release
         run: cpack
 
       - uses: actions/upload-artifact@v4
         with:
-          name: cpp-packages
+          name: packages
           path: |
-            build/cmake/*.deb
-            build/cmake/*.tar.gz
+            build/release/*.deb
+            build/release/*.tar.gz
           if-no-files-found: error
 
-  # Отладочная сборка с ASan/UBSan и покрытием: ошибки памяти не видны
-  # в обычном прогоне, а порог покрытия не даёт тестам отстать от кода.
-  cpp-checks:
+  # Форматирование, скрипты и тесты в отладочной сборке с ASan/UBSan и покрытием:
+  # ошибки памяти не видны в обычном прогоне, а порог покрытия не даёт тестам
+  # отстать от кода. Инструменты — из .venv с версиями из requirements-dev.txt,
+  # поэтому CI раскладывает код так же, как машина разработчика.
+  check:
     runs-on: ubuntu-24.04
 
     steps:
@@ -144,13 +82,13 @@ jobs:
       - name: Create the development environment
         run: make devenv
 
-      - name: Test under sanitizers and measure coverage
-        run: make cpp-check
+      - name: Check
+        run: make check
 
   # На тег v* пакеты прикрепляются к выпуску на GitHub.
   release:
     if: startsWith(github.ref, 'refs/tags/v')
-    needs: cpp
+    needs: [build, check]
     runs-on: ubuntu-24.04
     permissions:
       contents: write
@@ -158,7 +96,7 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
-          name: cpp-packages
+          name: packages
           path: packages
 
       - name: Attach the packages to the GitHub release
