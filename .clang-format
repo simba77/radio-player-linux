@@ -1,0 +1,18 @@
+# Стиль C++: отступ 4 и длина строки 110 — как у остального кода проекта,
+# фигурная скобка функции на новой строке, класса и блока — на той же (стиль Qt).
+BasedOnStyle: LLVM
+IndentWidth: 4
+ColumnLimit: 110
+AccessModifierOffset: -4
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterFunction: true
+AllowShortFunctionsOnASingleLine: Inline
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLambdasOnASingleLine: Inline
+AlwaysBreakTemplateDeclarations: Yes
+PointerAlignment: Right
+SpacesBeforeTrailingComments: 2
+FixNamespaceComments: true
+IncludeBlocks: Preserve
+SortIncludes: CaseSensitive

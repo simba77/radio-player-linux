@@ -1,0 +1,19 @@
+#pragma once
+
+// Имена и версия приложения. Файл генерирует CMake: версия задаётся одна,
+// в `project()` корневого CMakeLists.txt.
+
+namespace radio {
+
+// Короткое имя: команда `radio-player`, каталоги в ~/.config и ~/.cache.
+// Спецификация XDG не требует для них reverse-DNS, а переименование каталога
+// стоило бы миграции пользовательских файлов без всякой пользы.
+inline constexpr char APP_ID[] = "@PROJECT_NAME@";
+// Идентификатор приложения в системе: имя `.desktop`-файла, иконки, AppStream,
+// имя на шине D-Bus. Здесь reverse-DNS обязателен — на нём держится связь окна
+// с иконкой в Wayland и приём приложения в Flathub.
+inline constexpr char APP_RDNS_ID[] = "io.github.simba77.RadioPlayer";
+inline constexpr char APP_NAME[] = "Radio Player";
+inline constexpr char APP_VERSION[] = "@PROJECT_VERSION@";
+
+}  // namespace radio

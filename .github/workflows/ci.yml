@@ -76,3 +76,34 @@ jobs:
           name: deb
           path: dist/*.deb
           if-no-files-found: error
+
+  # C++-версия, которая заменит Python. Пока они живут рядом, у неё свой job.
+  cpp:
+    runs-on: ubuntu-24.04
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Ubuntu 24.04 — это Qt 6.4. Сборка здесь не даёт коду опереться на API
+      # новее, чем есть в поддерживаемых дистрибутивах, хотя локально Qt свежее.
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            cmake ninja-build g++ pkg-config qt6-base-dev catch2 python3-venv
+
+      - name: Configure
+        run: cmake -S . -B build/cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS=-Werror
+
+      - name: Build
+        run: cmake --build build/cmake
+
+      - name: Test
+        run: ctest --test-dir build/cmake --output-on-failure
+
+      # clang-format берётся из .venv, как и ruff: версия закреплена в
+      # requirements-dev.txt, и CI раскладывает код так же, как машина разработчика.
+      - name: Check formatting
+        run: |
+          make devenv
+          make cpp-lint

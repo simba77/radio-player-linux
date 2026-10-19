@@ -18,7 +18,12 @@ LUPDATE ?= $(shell command -v pyside6-lupdate 2>/dev/null || echo /usr/lib/qt6/b
 LANGUAGES := ru en
 SCANNED_LANGUAGES := ru
 
-.PHONY: help run probe deps deps-i18n devenv check lint shellcheck format typecheck test coverage icons i18n-update i18n-release install uninstall deb clean
+# C++-версия собирается CMake в отдельном каталоге: build/ занят упаковкой .deb.
+BUILD_DIR := build/cmake
+CLANG_FORMAT := $(VENV)/bin/clang-format
+CXX_SOURCES = $(shell find src tests -name '*.cpp' -o -name '*.hpp')
+
+.PHONY: help run probe deps deps-i18n deps-cpp devenv check lint shellcheck format typecheck test coverage icons i18n-update i18n-release install uninstall deb clean cpp-build cpp-test cpp-format cpp-lint
 
 help:
 	@echo "make deps      — установить системные зависимости (нужен sudo)"
@@ -39,10 +44,18 @@ help:
 	@echo "make uninstall — удалить из $(PREFIX)"
 	@echo "make icons     — перерисовать PNG из SVG-иконки"
 	@echo "make deb       — собрать .deb в dist/"
+	@echo "make deps-cpp  — зависимости сборки C++-версии (нужен sudo)"
+	@echo "make cpp-build — собрать C++-версию в $(BUILD_DIR)"
+	@echo "make cpp-test  — собрать и прогнать тесты C++-версии"
+	@echo "make cpp-format — отформатировать C++ (clang-format)"
+	@echo "make cpp-lint  — проверить форматирование C++"
 
 devenv:
 	$(PYTHON) -m venv --system-site-packages $(VENV)
 	$(VENV)/bin/pip install --quiet --requirement requirements-dev.txt
+
+deps-cpp:
+	sudo apt install -y cmake ninja-build g++ pkg-config qt6-base-dev catch2
 
 deps:
 	sudo apt install -y libmpv2 python3-mpv \
@@ -105,6 +118,19 @@ icons:
 
 deb:
 	sh scripts/build_deb.sh
+
+cpp-build:
+	cmake -S . -B $(BUILD_DIR) -G Ninja -DCMAKE_BUILD_TYPE=Debug
+	cmake --build $(BUILD_DIR)
+
+cpp-test: cpp-build
+	ctest --test-dir $(BUILD_DIR) --output-on-failure
+
+cpp-format: $(VENV_PY)
+	$(CLANG_FORMAT) -i $(CXX_SOURCES)
+
+cpp-lint: $(VENV_PY)
+	$(CLANG_FORMAT) --dry-run --Werror $(CXX_SOURCES)
 
 clean:
 	find . -name __pycache__ -type d -prune -exec rm -rf {} +
