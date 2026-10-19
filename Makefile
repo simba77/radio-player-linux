@@ -23,7 +23,7 @@ BUILD_DIR := build/cmake
 CLANG_FORMAT := $(VENV)/bin/clang-format
 CXX_SOURCES = $(shell find src tests -name '*.cpp' -o -name '*.hpp')
 
-.PHONY: help run probe deps deps-i18n deps-cpp devenv check lint shellcheck format typecheck test coverage icons i18n-update i18n-release install uninstall deb clean cpp-build cpp-test cpp-format cpp-lint cpp-i18n-update
+.PHONY: help run probe deps deps-i18n deps-cpp devenv check lint shellcheck format typecheck test coverage icons i18n-update i18n-release install uninstall deb clean cpp-build cpp-test cpp-format cpp-lint cpp-i18n-update cpp-release cpp-install cpp-deb
 
 help:
 	@echo "make deps      — установить системные зависимости (нужен sudo)"
@@ -49,6 +49,8 @@ help:
 	@echo "make cpp-test  — собрать и прогнать тесты C++-версии"
 	@echo "make cpp-format — отформатировать C++ (clang-format)"
 	@echo "make cpp-i18n-update — обновить translations/cpp/*.ts строками из C++"
+	@echo "make cpp-install — установить C++-версию в $(PREFIX)"
+	@echo "make cpp-deb   — собрать .deb и .tar.gz C++-версии в dist/"
 	@echo "make cpp-lint  — проверить форматирование C++"
 
 devenv:
@@ -56,7 +58,7 @@ devenv:
 	$(VENV)/bin/pip install --quiet --requirement requirements-dev.txt
 
 deps-cpp:
-	sudo apt install -y cmake ninja-build g++ pkg-config qt6-base-dev qt6-tools-dev qt6-l10n-tools \
+	sudo apt install -y cmake ninja-build g++ pkg-config dpkg-dev file qt6-base-dev qt6-tools-dev qt6-l10n-tools \
 		libqt6svg6 libmpv-dev catch2 dbus
 
 deps:
@@ -127,6 +129,19 @@ cpp-build:
 
 cpp-test: cpp-build
 	ctest --test-dir $(BUILD_DIR) --output-on-failure -j $(shell nproc)
+
+# Выпускная сборка — отдельно от отладочной, без тестов.
+RELEASE_DIR := build/release
+
+cpp-release:
+	cmake -S . -B $(RELEASE_DIR) -G Ninja -DCMAKE_BUILD_TYPE=Release -DRADIO_BUILD_TESTS=OFF
+	cmake --build $(RELEASE_DIR)
+
+cpp-install: cpp-release
+	cmake --install $(RELEASE_DIR) --prefix $(PREFIX)
+
+cpp-deb: cpp-release
+	cpack --config $(RELEASE_DIR)/CPackConfig.cmake -B dist
 
 # Строки интерфейса в C++-коде → каталоги translations/cpp/*.ts.
 cpp-i18n-update:

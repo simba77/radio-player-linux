@@ -121,6 +121,31 @@ target_link_libraries(radio_app PUBLIC radio_ui)
 add_executable(radio-player src/app/main.cpp)
 target_link_libraries(radio-player PRIVATE radio_app)
 
+# Установка. Пути внутри файлов от префикса не зависят: `.desktop` зовёт
+# команду по имени, поэтому годится и /usr, и ~/.local.
+include(GNUInstallDirs)
+install(TARGETS radio-player RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+install(FILES radio_player/resources/io.github.simba77.RadioPlayer.desktop
+    DESTINATION ${CMAKE_INSTALL_DATADIR}/applications)
+# Иконки темы hicolor: без них оболочка покажет приложение безымянным квадратом.
+install(DIRECTORY radio_player/resources/icons/hicolor DESTINATION ${CMAKE_INSTALL_DATADIR}/icons)
+# AppStream: по нему приложение видно в Discover и GNOME Software.
+install(FILES packaging/appstream/io.github.simba77.RadioPlayer.metainfo.xml
+    DESTINATION ${CMAKE_INSTALL_DATADIR}/metainfo)
+# Debian Policy §12.5 и §12.7: без copyright и changelog пакет не примет
+# ни один репозиторий. -n: без метки времени, иначе пакет не воспроизводим побайтово.
+find_program(GZIP gzip REQUIRED)
+add_custom_command(
+    OUTPUT ${CMAKE_BINARY_DIR}/changelog.Debian.gz
+    COMMAND sh -c "'${GZIP}' -9n -c '${CMAKE_SOURCE_DIR}/packaging/deb/changelog' > '${CMAKE_BINARY_DIR}/changelog.Debian.gz'"
+    DEPENDS ${CMAKE_SOURCE_DIR}/packaging/deb/changelog
+    VERBATIM
+)
+add_custom_target(debian_changelog ALL DEPENDS ${CMAKE_BINARY_DIR}/changelog.Debian.gz)
+install(FILES packaging/deb/copyright ${CMAKE_BINARY_DIR}/changelog.Debian.gz DESTINATION ${CMAKE_INSTALL_DOCDIR})
+
+include(packaging/CPackConfig.cmake)
+
 if(RADIO_BUILD_TESTS)
     find_package(Catch2 3 REQUIRED)
     find_package(Qt6 REQUIRED COMPONENTS Test Widgets)
@@ -151,6 +176,7 @@ if(RADIO_BUILD_TESTS)
         tests/test_station_store.cpp
         tests/test_storage.cpp
         tests/test_ui.cpp
+        tests/test_version.cpp
         tests/test_wiring.cpp
     )
     target_compile_definitions(radio-tests PRIVATE

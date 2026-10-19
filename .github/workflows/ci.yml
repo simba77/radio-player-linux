@@ -3,6 +3,7 @@ name: CI
 on:
   push:
     branches: [main]
+    tags: ["v*"]
   pull_request:
 
 permissions:
@@ -90,7 +91,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
-            cmake ninja-build g++ pkg-config qt6-base-dev qt6-tools-dev qt6-l10n-tools \
+            cmake ninja-build g++ pkg-config dpkg-dev file qt6-base-dev qt6-tools-dev qt6-l10n-tools \
             libqt6svg6 libmpv-dev catch2 dbus python3-venv
 
       - name: Configure
@@ -110,3 +111,40 @@ jobs:
         run: |
           make devenv
           make cpp-lint
+
+      # Собранные на 24.04 пакеты ставятся и там, и на более новых системах:
+      # зависимости от Qt dpkg-shlibdeps выводит по самой старой версии.
+      - name: Build packages
+        working-directory: build/cmake
+        run: cpack
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cpp-packages
+          path: |
+            build/cmake/*.deb
+            build/cmake/*.tar.gz
+          if-no-files-found: error
+
+  # На тег v* пакеты прикрепляются к выпуску на GitHub.
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: cpp
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: cpp-packages
+          path: packages
+
+      - name: Attach the packages to the GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          gh release view "$TAG" >/dev/null 2>&1 || gh release create "$TAG" --title "Radio Player ${TAG#v}" --generate-notes
+          gh release upload "$TAG" packages/* --clobber
