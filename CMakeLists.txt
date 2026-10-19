@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.22)
-project(radio-player VERSION 1.0.0 LANGUAGES CXX
+project(radio-player VERSION 2.0.0 LANGUAGES CXX
         DESCRIPTION "Internet radio player for Linux"
         HOMEPAGE_URL "https://github.com/simba77/radio-player-linux")
 

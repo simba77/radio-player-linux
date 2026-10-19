@@ -78,6 +78,12 @@
   <content_rating type="oars-1.1"/>
 
   <releases>
+    <release version="2.0.0" date="2026-10-19">
+      <description>
+        <p>Rewritten in C++ with Qt 6 and libmpv. Settings and station edits carry over.</p>
+        <p xml:lang="ru">Переписан на C++ с Qt 6 и libmpv. Настройки и правки списка станций сохраняются.</p>
+      </description>
+    </release>
     <release version="1.0.0" date="2026-08-13">
       <description>
         <p>First public release.</p>
