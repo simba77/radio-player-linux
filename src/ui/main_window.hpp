@@ -42,7 +42,7 @@ public:
     void allowClose() { closable_ = true; }
     // Показывает окно настроек, переиспользуя уже открытое.
     void openSettings();
-    SettingsDialog *settingsDialog() const { return settingsDialog_; }
+    SettingsDialog *settingsDialog() const;
     // Клик по иконке в трее.
     void toggleVisibility();
     // Показывает окно и переводит на него фокус.

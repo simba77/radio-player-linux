@@ -6,6 +6,8 @@
 // двойнике, без звука. Все сигналы приходят в потоке объекта — переброску из
 // потока mpv реализация берёт на себя.
 
+#include <QByteArray>
+#include <QMap>
 #include <QObject>
 #include <QString>
 #include <QVariantMap>
@@ -47,7 +49,9 @@ signals:
 class LibMpv : public MpvBackend {
     Q_OBJECT
 public:
-    explicit LibMpv(QObject *parent = nullptr);
+    // Дополнительные опции mpv нужны тестам: `ao=null` проигрывает поток без
+    // звуковой карты и без звука в динамиках.
+    explicit LibMpv(const QMap<QByteArray, QByteArray> &options = {}, QObject *parent = nullptr);
     ~LibMpv() override;
 
     QString play(const QString &url) override;

@@ -48,7 +48,9 @@ private:
     void setWanted(bool wanted);
     void acquire();
     void onInhibited(QDBusPendingCallWatcher *watcher);
-    void drop();
+    // Снимает блокировку. При выходе ждёт, пока служба примет вызов: асинхронное
+    // сообщение может уйти вместе с соединением, не дойдя до шины.
+    void drop(bool waitForDelivery = false);
     // Одного сообщения за сеанс достаточно: без блокировки радио играет,
     // просто система может заснуть — ломать этим интерфейс не за что.
     void warn(const QString &reason);

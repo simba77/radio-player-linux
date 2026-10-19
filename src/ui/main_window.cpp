@@ -170,6 +170,11 @@ void MainWindow::openSettings()
     settingsDialog_->activateWindow();
 }
 
+SettingsDialog *MainWindow::settingsDialog() const
+{
+    return settingsDialog_;
+}
+
 void MainWindow::closeEvent(QCloseEvent *event)
 {
     if (closable_ || !settings_->closeToTray()) {

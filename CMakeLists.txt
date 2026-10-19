@@ -109,6 +109,18 @@ add_custom_target(i18n_update
     VERBATIM
 )
 
+# Точка входа: разбор аргументов, связки подсистем, сигналы Unix.
+add_library(radio_app STATIC
+    src/app/cli.cpp
+    src/app/unix_signals.cpp
+    src/app/wiring.cpp
+)
+target_include_directories(radio_app PUBLIC src/app)
+target_link_libraries(radio_app PUBLIC radio_ui)
+
+add_executable(radio-player src/app/main.cpp)
+target_link_libraries(radio-player PRIVATE radio_app)
+
 if(RADIO_BUILD_TESTS)
     find_package(Catch2 3 REQUIRED)
     find_package(Qt6 REQUIRED COMPONENTS Test Widgets)
@@ -122,6 +134,7 @@ if(RADIO_BUILD_TESTS)
         tests/test_artwork.cpp
         tests/test_autostart.cpp
         tests/test_catalog.cpp
+        tests/test_cli.cpp
         tests/test_hls_provider.cpp
         tests/test_i18n.cpp
         tests/test_icy_provider.cpp
@@ -134,15 +147,20 @@ if(RADIO_BUILD_TESTS)
         tests/test_settings.cpp
         tests/test_settings_store.cpp
         tests/test_single_instance.cpp
+        tests/test_startup.cpp
         tests/test_station_store.cpp
         tests/test_storage.cpp
         tests/test_ui.cpp
+        tests/test_wiring.cpp
     )
     target_compile_definitions(radio-tests PRIVATE
         RADIO_SOURCE_DIR="${CMAKE_SOURCE_DIR}"
         RADIO_LUPDATE="$<TARGET_FILE:Qt6::lupdate>"
+        RADIO_APP_BINARY="$<TARGET_FILE:radio-player>"
     )
-    target_link_libraries(radio-tests PRIVATE radio_ui Catch2::Catch2 Qt6::Test)
+    target_link_libraries(radio-tests PRIVATE radio_app Catch2::Catch2 Qt6::Test)
+    # Тест запуска стартует настоящую программу.
+    add_dependencies(radio-tests radio-player)
     # Код 4 — тест пропущен (например, без dbus-daemon): для ctest это не падение.
     catch_discover_tests(radio-tests PROPERTIES
         ENVIRONMENT "QT_QPA_PLATFORM=offscreen"

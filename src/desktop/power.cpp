@@ -32,7 +32,9 @@ SleepInhibitor::SleepInhibitor(PlayerManager *player, const QDBusConnection &con
 
 void SleepInhibitor::release()
 {
-    setWanted(false);
+    // Запрос, который ещё летит, снимет `onInhibited`: намерения больше нет.
+    wanted_ = false;
+    drop(true);
 }
 
 // MARK: - Намерение
@@ -87,7 +89,7 @@ void SleepInhibitor::onInhibited(QDBusPendingCallWatcher *watcher)
         drop();  // Воспроизведение успело кончиться, пока летел запрос.
 }
 
-void SleepInhibitor::drop()
+void SleepInhibitor::drop(bool waitForDelivery)
 {
     if (!cookie_)
         return;
@@ -95,7 +97,9 @@ void SleepInhibitor::drop()
     // `UnInhibit` требует uint32: в Python-версии это обходили через метаобъект,
     // здесь тип задаётся самим значением.
     call << *std::exchange(cookie_, std::nullopt);
-    connection_.call(call, QDBus::NoBlock);
+    // Ожидание крутит цикл событий, а не блокирует его: служба может жить
+    // в этом же процессе (так устроены тесты).
+    connection_.call(call, waitForDelivery ? QDBus::BlockWithGui : QDBus::NoBlock, CALL_TIMEOUT_MS);
 }
 
 void SleepInhibitor::warn(const QString &reason)

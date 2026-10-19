@@ -14,6 +14,7 @@
 #include <QObject>
 #include <QProcess>
 #include <QStringList>
+#include <QTemporaryFile>
 
 namespace radio::test {
 
@@ -26,10 +27,13 @@ public:
 
     // Удалось ли поднять шину. Без `dbus-daemon` тест пропускается.
     bool available() const { return !address_.isEmpty(); }
+    // Адрес шины — для DBUS_SESSION_BUS_ADDRESS запускаемой программы.
+    QString address() const { return address_; }
     // Новое независимое соединение с шиной.
     QDBusConnection connect();
 
 private:
+    QTemporaryFile config_;
     QProcess daemon_;
     QString address_;
     QStringList names_;

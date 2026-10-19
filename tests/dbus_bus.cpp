@@ -4,12 +4,36 @@
 
 namespace radio::test {
 
+namespace {
+
+// Конфигурация без каталогов служб: стандартная сеансовая умеет запускать
+// службы по первому обращению (AT-SPI, порталы), и тест поднял бы настоящие
+// процессы пользователя на своей шине.
+const QByteArray CONFIG = R"(<!DOCTYPE busconfig PUBLIC "-//freedesktop//DTD D-Bus Bus Configuration 1.0//EN"
+ "http://www.freedesktop.org/standards/dbus/1.0/busconfig.dtd">
+<busconfig>
+  <type>session</type>
+  <listen>unix:tmpdir=/tmp</listen>
+  <auth>EXTERNAL</auth>
+  <policy context="default">
+    <allow send_destination="*" eavesdrop="true"/>
+    <allow eavesdrop="true"/>
+    <allow own="*"/>
+  </policy>
+</busconfig>
+)";
+
+}  // namespace
+
 PrivateBus::PrivateBus()
 {
-    if (QStandardPaths::findExecutable(QStringLiteral("dbus-daemon")).isEmpty())
+    if (QStandardPaths::findExecutable(QStringLiteral("dbus-daemon")).isEmpty() || !config_.open())
         return;
-    daemon_.start(QStringLiteral("dbus-daemon"), {QStringLiteral("--session"), QStringLiteral("--nofork"),
-                                                  QStringLiteral("--print-address")});
+    config_.write(CONFIG);
+    config_.flush();
+    daemon_.start(QStringLiteral("dbus-daemon"),
+                  {QStringLiteral("--config-file=") + config_.fileName(), QStringLiteral("--nofork"),
+                   QStringLiteral("--print-address")});
     if (!daemon_.waitForStarted(5000))
         return;
     while (!daemon_.canReadLine() && daemon_.waitForReadyRead(5000)) {

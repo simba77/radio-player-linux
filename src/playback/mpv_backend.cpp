@@ -48,7 +48,7 @@ QVariantMap metadataMap(const mpv_node *node)
 
 }  // namespace
 
-LibMpv::LibMpv(QObject *parent) : MpvBackend(parent)
+LibMpv::LibMpv(const QMap<QByteArray, QByteArray> &options, QObject *parent) : MpvBackend(parent)
 {
     // libmpv падает при не-C числовой локали, а Qt выставляет системную.
     std::setlocale(LC_NUMERIC, "C");
@@ -60,6 +60,8 @@ LibMpv::LibMpv(QObject *parent) : MpvBackend(parent)
     }
     mpv_set_option_string(mpv_, "video", "no");
     mpv_set_option_string(mpv_, "ytdl", "no");
+    for (auto it = options.cbegin(); it != options.cend(); ++it)
+        mpv_set_option_string(mpv_, it.key().constData(), it.value().constData());
     if (mpv_initialize(mpv_) < 0) {
         qWarning().noquote() << u"libmpv не инициализировался — воспроизведение недоступно."_s;
         mpv_terminate_destroy(mpv_);
