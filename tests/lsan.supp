@@ -1,0 +1,12 @@
+# Подавления LeakSanitizer — только для чужих библиотек.
+#
+# libproxy, через который Qt Network узнаёт системный прокси, при первом
+# запросе заводит объекты GLib и не освобождает их до выхода из процесса.
+leak:libpxbackend-1.0.so
+leak:libproxy.so
+# Плагин NetworkManager для QNetworkInformation кэширует метаобъекты QtDBus
+# и не освобождает их при выгрузке.
+leak:libqnetworkmanager.so
+# Тема платформы xdg-desktop-portal оставляет наблюдателя за ответом портала,
+# если шины нет и ответ не приходит.
+leak:libqxdgdesktopportal.so

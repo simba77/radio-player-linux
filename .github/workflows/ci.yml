@@ -126,6 +126,27 @@ jobs:
             build/cmake/*.tar.gz
           if-no-files-found: error
 
+  # Отладочная сборка с ASan/UBSan и покрытием: ошибки памяти не видны
+  # в обычном прогоне, а порог покрытия не даёт тестам отстать от кода.
+  cpp-checks:
+    runs-on: ubuntu-24.04
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            cmake ninja-build g++ pkg-config qt6-base-dev qt6-tools-dev qt6-l10n-tools \
+            libqt6svg6 libmpv-dev catch2 dbus python3-venv
+
+      - name: Create the development environment
+        run: make devenv
+
+      - name: Test under sanitizers and measure coverage
+        run: make cpp-check
+
   # На тег v* пакеты прикрепляются к выпуску на GitHub.
   release:
     if: startsWith(github.ref, 'refs/tags/v')

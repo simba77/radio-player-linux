@@ -11,6 +11,8 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
 endif()
 
 option(RADIO_BUILD_TESTS "Собирать тесты" ON)
+option(RADIO_SANITIZE "Собирать с AddressSanitizer и UndefinedBehaviorSanitizer" OFF)
+option(RADIO_COVERAGE "Собирать с измерением покрытия (gcov)" OFF)
 
 # Qt 6.4 — то, что есть в Ubuntu 24.04. CI собирает там, поэтому API новее
 # использовать нельзя, даже если локально стоит свежая версия.
@@ -21,6 +23,14 @@ find_package(PkgConfig REQUIRED)
 pkg_check_modules(MPV REQUIRED IMPORTED_TARGET mpv>=2.1)
 
 add_compile_options(-Wall -Wextra -Wpedantic)
+if(RADIO_SANITIZE)
+    add_compile_options(-fsanitize=address,undefined -fno-omit-frame-pointer -fno-sanitize-recover=undefined)
+    add_link_options(-fsanitize=address,undefined)
+endif()
+if(RADIO_COVERAGE)
+    add_compile_options(--coverage)
+    add_link_options(--coverage)
+endif()
 add_compile_definitions(QT_NO_CAST_TO_ASCII QT_NO_URL_CAST_FROM_STRING)
 
 configure_file(src/core/app_info.hpp.in ${CMAKE_BINARY_DIR}/generated/app_info.hpp @ONLY)
