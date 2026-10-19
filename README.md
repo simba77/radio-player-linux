@@ -24,18 +24,22 @@ in the settings.
 
 ## Installation
 
-### From .deb
+### From a release
+
+Every [release](https://github.com/simba77/radio-player-linux/releases) carries a `.deb` for
+Debian, Ubuntu and KDE neon, built on Ubuntu 24.04, and a `.tar.gz` with the same files for other
+distributions:
 
 ```bash
-make deb
-sudo apt install ./dist/radio-player_0.1.0_all.deb
+sudo apt install ./radio-player_*_amd64.deb
 ```
 
-### Into your home directory
+### From source
 
 ```bash
-make deps      # system dependencies, needs sudo
+make deps      # build dependencies, needs sudo (Ubuntu 24.04 / KDE neon package names)
 make install   # into ~/.local (use PREFIX=... for another location)
+make deb       # or a .deb and a .tar.gz in dist/
 ```
 
 Make sure `~/.local/bin` is in your `PATH`. To remove it, run `make uninstall` — it also turns
@@ -44,13 +48,10 @@ autostart off, since the entry would point at a command that no longer exists. S
 
 ### Dependencies
 
-Python 3.12+, PySide6 (Qt 6), libmpv 0.36+. On Ubuntu/KDE neon a single command installs them:
-
-```bash
-sudo apt install libmpv2 python3-mpv \
-    python3-pyside6.qtcore python3-pyside6.qtgui python3-pyside6.qtwidgets \
-    python3-pyside6.qtnetwork python3-pyside6.qtdbus
-```
+Qt 6.4+ (Core, Gui, Widgets, Network, DBus) and libmpv 0.36+ at run time; building also needs
+CMake 3.22+, a C++20 compiler, the Qt Linguist tools and, for the tests, Catch2 3 and dbus-daemon.
+The SVG icon engine (`libqt6svg6`) is needed for themed icons; `qt6-wayland` gives a native
+Wayland window and `qt6-translations-l10n` translates Qt's own dialogs.
 
 ## Running from source
 
@@ -64,14 +65,17 @@ run `radio-player --log-level debug`; `--version` prints the version.
 ## Development
 
 ```bash
-make devenv  # .venv with the pinned dev tools (system packages stay visible)
-make check   # lint, types and tests — what CI runs
-make format  # apply ruff format and the fixes ruff can make itself
-make probe   # inspect metadata of a live stream
+make devenv  # .venv with the pinned dev tools: clang-format, gcovr, shellcheck
+make test    # build and run the tests
+make check   # formatting, scripts, tests under ASan/UBSan and the coverage threshold — what CI runs
+make format  # apply clang-format
 ```
 
-Optionally `pip install pre-commit && pre-commit install` runs the same lint and format checks
-before each commit.
+The tests need no display, sound or session bus: Qt runs on the offscreen platform, network code
+talks to a local HTTP server, and the D-Bus tests start a private `dbus-daemon`.
+
+Optionally `pip install pre-commit && pre-commit install` runs the same format checks before each
+commit.
 
 ### Translations
 
@@ -79,13 +83,12 @@ Interface strings are English literals in the source, translated with Qt Linguis
 or changing a string:
 
 ```bash
-make deps-i18n     # once: pyside6-lupdate, which unlike the Qt one understands Python
 make i18n-update   # pull new strings into translations/*.ts
 linguist translations/radio_player_ru.ts
-make i18n-release  # compile to radio_player/resources/i18n/*.qm
 ```
 
-The compiled `.qm` files are committed, so installing the app needs no Qt tooling.
+The `.qm` files are compiled during the build and embedded in the binary; a test fails when the
+catalog drifts from the code.
 
 ## Station catalogs
 
@@ -144,10 +147,12 @@ Data model, the two metadata providers and the playback state machine are descri
 
 ## Stack
 
-Python · PySide6 (Qt 6) · libmpv · MPRIS2
+C++20 · Qt 6 Widgets · libmpv · MPRIS2
+
+Versions up to 1.0.0 were written in Python with PySide6; see the `v1.0.0` tag.
 
 ## License
 
-[MIT](LICENSE). The libraries the player builds on keep their own licenses: PySide6 (LGPL-3),
-python-mpv (GPL-2+ or LGPL-2.1+) and libmpv (LGPL-2.1+) are used as system packages and are
+[MIT](LICENSE). The libraries the player builds on keep their own licenses: Qt (LGPL-3) and
+libmpv (LGPL-2.1+ or GPL-2+, depending on how it was built) are used as system libraries and are
 not redistributed with this project.

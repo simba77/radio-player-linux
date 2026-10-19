@@ -7,18 +7,21 @@ behaviour — when they disagree, the code is right and this file is a bug.
 ## Layers
 
 ```
-ui/          windows, tray, settings tabs          (PySide6.QtWidgets)
-playback/    libmpv, playback states, metadata     (player, artwork, metadata/)
-desktop/     MPRIS, sleep inhibitor, autostart,    (D-Bus, XDG, single instance)
-             network reachability
-core/        stations, catalogs, settings, disk    (no widgets, no D-Bus, no sound)
+src/app/       entry point, arguments, Unix signals  (radio-player, radio_app)
+src/ui/        windows, tray, settings tabs, i18n    (radio_ui: Qt Widgets)
+src/desktop/   MPRIS, sleep inhibitor, autostart,    (radio_desktop: Qt DBus, XDG)
+               network reachability, single instance
+src/playback/  libmpv, playback states, metadata     (radio_playback: Qt Gui, libmpv)
+src/core/      stations, catalogs, settings, disk    (radio_core: Qt Core and Network only)
 ```
 
-Dependencies point one way — `ui → playback/desktop → core` — and `tests/test_layers.py` fails
-if that stops being true. `__main__.py` is the composition root: it builds the objects, connects
-them and owns their lifetime; nothing else wires two subsystems together.
+Each layer is a static library with its own header directory, and dependencies point one way —
+`app → ui → desktop → playback → core`. A layer sees only the headers and symbols of what it links,
+so a forbidden dependency does not compile instead of waiting for a review. `src/app/main.cpp`
+is the composition root: it builds the objects, connects them and owns their lifetime; nothing
+else wires two subsystems together.
 
-Data flows `__main__` → `StationStore` / `SettingsStore` → `PlayerManager` → UI via Qt signals,
+Data flows `main()` → `StationStore` / `SettingsStore` → `PlayerManager` → UI via Qt signals,
 which replace `@Published` from the macOS version.
 
 ## Data model: catalogs plus a local overlay
@@ -100,9 +103,13 @@ un-hiding one would send it to the end of the list.
   artwork/               cover art, named by the hash of its URL
 ```
 
-Every path is built in `core/paths.py`; `state.json` is written with `update_state()`, which
-re-reads before writing — it has several independent writers, and a full rewrite would drop
-whichever key someone else had just set.
+Every path is built in `src/core/paths.cpp`; `state.json` is written with
+`storage::updateState()`, which re-reads before writing — it has several independent writers, and
+a full rewrite would drop whichever key someone else had just set.
+
+Catalog files are named by BLAKE2s-128 of the source URL, artwork by SHA-1 of its URL. Versions
+1.x (Python) used BLAKE2b for catalogs, which Qt lacks: their cached catalogs are pruned and
+fetched again, while their artwork is reused as is.
 
 The catalog cache is a derivative of the configured source list, not a store of its own: it is
 read strictly by that list and pruned of everything else, so removing a catalog removes its
@@ -110,16 +117,18 @@ stations.
 
 ## Catalog updates
 
-- A bundled copy ships inside the package, so the application works immediately and offline.
+- A bundled copy is embedded in the binary, so the application works immediately and offline.
 - A background update runs ~2 s after start, and then no more often than the configured interval
   (24 h by default).
-- `ETag` / `If-None-Match`; a 304 or any error leaves the cached copy in place, silently.
+- `ETag` / `If-None-Match`; a 304 or any error leaves the cached copy in place, silently. The ETag
+  is sent only while its cache file exists: a 304 carries no body, so a deleted cache would
+  otherwise never come back.
 - Extra catalogs must be HTTPS: a catalog decides what and where to play, so replacing it in
   transit replaces the whole station list.
 
 ## Metadata: two providers
 
-Verified against live streams (`scripts/probe_metadata.py`).
+Verified against live streams in August 2026.
 
 **Direct Icecast/Shoutcast streams** — libmpv reports ICY metadata itself:
 
@@ -156,15 +165,15 @@ normal, and the stream keeps playing.
 
 ## Playback states
 
-`PlaybackState` is the single observable state — `IDLE`, `LOADING`, `PLAYING`, `RECONNECTING`,
-`FAILED`. It is never set optimistically: `PLAYING` means mpv confirmed audio, not that the
-player asked for it. Two derived views matter to everyone else:
+`PlaybackState` is the single observable state — `Idle`, `Loading`, `Playing`, `Reconnecting`,
+`Failed`. It is never set optimistically: `Playing` means mpv confirmed audio (`core-idle` went
+false), not that the player asked for it. Two derived views matter to everyone else:
 
-- `is_playing` — sound is actually flowing (tray icon, list row);
-- `is_active` — the user is waiting for sound, including loading and reconnecting (stop button,
+- `isPlaying()` — sound is actually flowing (tray icon, list row);
+- `isActive()` — the user is waiting for sound, including loading and reconnecting (stop button,
   sleep inhibitor, MPRIS `PlaybackStatus`), so nothing flickers while a stream rebuffers.
 
-The *intent* to play (`_should_be_playing`) is separate from all of them and is cleared only by an
+The *intent* to play (`shouldBePlaying_`) is separate from all of them and is cleared only by an
 explicit `stop()`. A network drop does not cancel it — that is what makes an endless reconnect
 correct rather than a runaway loop.
 
@@ -175,11 +184,12 @@ buffering) turns a hung stream into a reconnect.
 
 ## Desktop integration
 
-Everything in `desktop/` must degrade silently, because none of it is guaranteed to exist:
+Everything in `src/desktop/` must degrade silently, because none of it is guaranteed to exist:
 
 - **MPRIS2** gives media keys and the "Media Player" applet. `PropertiesChanged` must be sent
-  with an empty **string** array — Qt marshals a plain empty list as `av`, and Plasma ignores such
-  a signal without a word (see the comment in `desktop/mpris.py`).
+  with an empty **string** array (`as`): a list of variants goes out as `av`, and Plasma ignores
+  such a signal without a word. The tests receive the signal from a private bus and check the
+  signature.
 - **Sleep inhibition** is explicit (`org.freedesktop.PowerManagement.Inhibit`): neither libmpv nor
   an active MPRIS player keeps the system awake, and idle suspend cuts the stream off.
 - **The tray is optional.** On GNOME without the AppIndicator extension there is none, and the

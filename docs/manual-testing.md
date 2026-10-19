@@ -23,7 +23,7 @@ make install && radio-player --log-level=debug
 | 1.3 | Find the app in the application menu | Listed under Audio/Multimedia, correct name and icon |
 | 1.4 | Close the window | The app keeps running (tray) or quits, per the setting in "General" |
 | 1.5 | Start a second copy from the terminal | No second window; the existing one is raised and focused. On Wayland raising needs the xdg-activation token — if focus is only "requested" (taskbar entry blinks), note it |
-| 1.6 | `pkill -TERM -f 'python3 -m radio_player'` (the wrapper `exec`s Python, so the process is not named `radio-player`) | Exits cleanly, state saved, no inhibitor left behind (see 5.3) |
+| 1.6 | `pkill -TERM -x radio-player` | Exits cleanly, state saved, no inhibitor left behind (see 5.3) |
 
 ## 2. Tray
 
@@ -72,7 +72,7 @@ Plasma only; on GNOME confirm the *absence* is handled (2.4).
 
 | # | Step | Expected |
 |---|---|---|
-| 6.1 | `sudo dpkg -i dist/radio-player_*.deb` on a clean machine | Installs, pulls its dependencies, launches from the application menu |
+| 6.1 | `sudo apt install ./radio-player_*_amd64.deb` from the release on a clean machine | Installs, pulls its dependencies (on KDE neon too), launches from the application menu |
 | 6.2 | `make uninstall` | Binary, desktop entry, icons, metainfo and the autostart entry are all gone |
 
 ## Reporting
