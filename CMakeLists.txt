@@ -25,15 +25,24 @@ configure_file(src/core/app_info.hpp.in ${CMAKE_BINARY_DIR}/generated/app_info.h
 # Слои — отдельные библиотеки, у каждой свой каталог заголовков. Слою видно только
 # то, с чем он связан, поэтому запрещённая зависимость ломает сборку, а не ждёт ревью.
 add_library(radio_core STATIC
+    src/core/catalog.cpp
     src/core/json_values.cpp
     src/core/models.cpp
     src/core/paths.cpp
     src/core/playlist_io.cpp
     src/core/settings.cpp
+    src/core/settings_store.cpp
+    src/core/station_store.cpp
     src/core/storage.cpp
 )
 target_include_directories(radio_core PUBLIC src/core ${CMAKE_BINARY_DIR}/generated)
 target_link_libraries(radio_core PUBLIC Qt6::Core Qt6::Network)
+# Встроенная копия каталога: приложение работает сразу и без сети.
+qt_add_resources(radio_core "catalogs"
+    PREFIX "/catalogs"
+    BASE radio_player/resources/catalogs
+    FILES radio_player/resources/catalogs/record.json
+)
 
 if(RADIO_BUILD_TESTS)
     find_package(Catch2 3 REQUIRED)
@@ -41,11 +50,15 @@ if(RADIO_BUILD_TESTS)
     include(CTest)
     include(Catch)
     add_executable(radio-tests
+        tests/http_server.cpp
         tests/main.cpp
         tests/support.cpp
+        tests/test_catalog.cpp
         tests/test_models.cpp
         tests/test_playlist_io.cpp
         tests/test_settings.cpp
+        tests/test_settings_store.cpp
+        tests/test_station_store.cpp
         tests/test_storage.cpp
     )
     target_compile_definitions(radio-tests PRIVATE RADIO_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
