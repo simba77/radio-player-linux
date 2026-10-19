@@ -55,7 +55,7 @@ devenv:
 	$(VENV)/bin/pip install --quiet --requirement requirements-dev.txt
 
 deps-cpp:
-	sudo apt install -y cmake ninja-build g++ pkg-config qt6-base-dev libmpv-dev catch2
+	sudo apt install -y cmake ninja-build g++ pkg-config qt6-base-dev libmpv-dev catch2 dbus
 
 deps:
 	sudo apt install -y libmpv2 python3-mpv \
@@ -124,7 +124,7 @@ cpp-build:
 	cmake --build $(BUILD_DIR)
 
 cpp-test: cpp-build
-	ctest --test-dir $(BUILD_DIR) --output-on-failure
+	ctest --test-dir $(BUILD_DIR) --output-on-failure -j $(shell nproc)
 
 cpp-format: $(VENV_PY)
 	$(CLANG_FORMAT) -i $(CXX_SOURCES)

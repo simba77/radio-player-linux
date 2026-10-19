@@ -14,7 +14,7 @@ option(RADIO_BUILD_TESTS "Собирать тесты" ON)
 
 # Qt 6.4 — то, что есть в Ubuntu 24.04. CI собирает там, поэтому API новее
 # использовать нельзя, даже если локально стоит свежая версия.
-find_package(Qt6 6.4 REQUIRED COMPONENTS Core Gui Network)
+find_package(Qt6 6.4 REQUIRED COMPONENTS Core DBus Gui Network)
 qt_standard_project_setup()
 find_package(PkgConfig REQUIRED)
 # libmpv 0.36 — клиентский API 2.1.
@@ -59,29 +59,49 @@ add_library(radio_playback STATIC
 target_include_directories(radio_playback PUBLIC src/playback)
 target_link_libraries(radio_playback PUBLIC radio_core Qt6::Gui PRIVATE PkgConfig::MPV)
 
+# Интеграция с рабочим столом: MPRIS, запрет засыпания, сеть, single instance,
+# автозапуск. Всё здесь обязано деградировать молча и не знает об окнах.
+add_library(radio_desktop STATIC
+    src/desktop/autostart.cpp
+    src/desktop/mpris.cpp
+    src/desktop/network.cpp
+    src/desktop/power.cpp
+    src/desktop/single_instance.cpp
+)
+target_include_directories(radio_desktop PUBLIC src/desktop)
+target_link_libraries(radio_desktop PUBLIC radio_playback Qt6::DBus)
+
 if(RADIO_BUILD_TESTS)
     find_package(Catch2 3 REQUIRED)
     find_package(Qt6 REQUIRED COMPONENTS Test Widgets)
     include(CTest)
     include(Catch)
     add_executable(radio-tests
+        tests/dbus_bus.cpp
         tests/http_server.cpp
         tests/main.cpp
         tests/support.cpp
         tests/test_artwork.cpp
+        tests/test_autostart.cpp
         tests/test_catalog.cpp
         tests/test_hls_provider.cpp
         tests/test_icy_provider.cpp
         tests/test_libmpv.cpp
         tests/test_models.cpp
+        tests/test_mpris.cpp
         tests/test_player.cpp
         tests/test_playlist_io.cpp
+        tests/test_power.cpp
         tests/test_settings.cpp
         tests/test_settings_store.cpp
+        tests/test_single_instance.cpp
         tests/test_station_store.cpp
         tests/test_storage.cpp
     )
     target_compile_definitions(radio-tests PRIVATE RADIO_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
-    target_link_libraries(radio-tests PRIVATE radio_playback Catch2::Catch2 Qt6::Test Qt6::Widgets)
-    catch_discover_tests(radio-tests PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+    target_link_libraries(radio-tests PRIVATE radio_desktop Catch2::Catch2 Qt6::Test Qt6::Widgets)
+    # Код 4 — тест пропущен (например, без dbus-daemon): для ctest это не падение.
+    catch_discover_tests(radio-tests PROPERTIES
+        ENVIRONMENT "QT_QPA_PLATFORM=offscreen"
+        SKIP_RETURN_CODE 4)
 endif()
