@@ -1,6 +1,7 @@
 #include "dbus_bus.hpp"
 
 #include <QStandardPaths>
+#include <QTimer>
 
 namespace radio::test {
 
@@ -76,6 +77,34 @@ uint FakePowerManagement::Inhibit(const QString &, const QString &)
 void FakePowerManagement::UnInhibit(uint cookie)
 {
     released.append(cookie);
+}
+
+bool FakeInhibitPortal::registerOn(QDBusConnection connection)
+{
+    connection_ = connection;
+    return connection.registerObject(QStringLiteral("/org/freedesktop/portal/desktop"), this,
+                                     QDBusConnection::ExportAllSlots) &&
+           connection.registerService(QStringLiteral("org.freedesktop.portal.Desktop"));
+}
+
+QDBusObjectPath FakeInhibitPortal::Inhibit(const QString &window, uint flags, const QVariantMap &options)
+{
+    calls.append({window, flags, options});
+    const QString path = QStringLiteral("/org/freedesktop/portal/desktop/request/test/%1").arg(calls.size());
+    auto exportRequest = [this, path] {
+        connection_.registerObject(path, new FakePortalRequest(this, path), QDBusConnection::ExportAllSlots);
+    };
+    if (requestDelayMs > 0)
+        QTimer::singleShot(requestDelayMs, this, exportRequest);
+    else
+        exportRequest();
+    return QDBusObjectPath(path);
+}
+
+void FakePortalRequest::Close()
+{
+    portal_->closed.append(path_);
+    deleteLater();
 }
 
 }  // namespace radio::test

@@ -190,8 +190,11 @@ Everything in `src/desktop/` must degrade silently, because none of it is guaran
   with an empty **string** array (`as`): a list of variants goes out as `av`, and Plasma ignores
   such a signal without a word. The tests receive the signal from a private bus and check the
   signature.
-- **Sleep inhibition** is explicit (`org.freedesktop.PowerManagement.Inhibit`): neither libmpv nor
-  an active MPRIS player keeps the system awake, and idle suspend cuts the stream off.
+- **Sleep inhibition** is explicit: neither libmpv nor an active MPRIS player keeps the system
+  awake, and idle suspend cuts the stream off. The portal `org.freedesktop.portal.Inhibit` is
+  tried first with the suspend flag only — the screen may still blank and lock — and works from a
+  Flatpak sandbox too; when it is missing or fails, the legacy
+  `org.freedesktop.PowerManagement.Inhibit` takes over for the rest of the session.
 - **The tray is optional.** On GNOME without the AppIndicator extension there is none, and the
   application stays fully usable as a window.
 - **Single instance** is a `QLocalServer` socket. The second launch hands the first its

@@ -64,7 +64,7 @@ Plasma only; on GNOME confirm the *absence* is handled (2.4).
 |---|---|---|
 | 5.1 | Enable "Start on login", relog | The app starts; `~/.config/autostart/io.github.simba77.RadioPlayer.desktop` exists and its `Exec` works from any working directory |
 | 5.2 | Disable it | The file is gone |
-| 5.3 | During playback: `busctl --user call org.kde.Solid.PowerManagement.PolicyAgent /org/kde/Solid/PowerManagement/PolicyAgent org.kde.Solid.PowerManagement.PolicyAgent ListInhibitions` (Plasma) or `gnome-session-inhibit --list` (GNOME) | The app holds an inhibition while playing or reconnecting, and releases it on stop and on quit (the list updates a few seconds late) |
+| 5.3 | During playback: `busctl --user call org.kde.Solid.PowerManagement.PolicyAgent /org/kde/Solid/PowerManagement/PolicyAgent org.kde.Solid.PowerManagement.PolicyAgent ListInhibitions` (Plasma) or `gnome-session-inhibit --list` (GNOME) | The app holds an inhibition while playing or reconnecting, and releases it on stop and on quit (the list updates a few seconds late). Through the portal it is listed under the app id the portal derives from how the app was started (from the menu, expect `io.github.simba77.RadioPlayer`; from a terminal, whatever owns the terminal); as "Radio Player" only when the portal is missing and the legacy interface is used |
 | 5.4 | Set the idle sleep timeout to its minimum and let the stream play | The machine does not suspend |
 | 5.5 | Switch the system theme light ↔ dark | Icons and the muted text stay readable in both |
 

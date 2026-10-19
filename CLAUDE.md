@@ -74,7 +74,15 @@ application and applies it to the fresh window, which then flashes and vanishes 
 makes a freshly started instance come up minimized).
 
 **System sleep must be inhibited explicitly** (`src/desktop/power.cpp`): neither libmpv nor an
-active MPRIS player holds the system awake, and idle auto-suspend cuts the stream off.
+active MPRIS player holds the system awake, and idle auto-suspend cuts the stream off. The portal
+`org.freedesktop.portal.Inhibit` comes first — it also works inside a Flatpak sandbox — with the
+legacy `org.freedesktop.PowerManagement.Inhibit` as the fallback when the portal is missing or
+fails.
+
+**The portal answers Inhibit before its request object exists.** A `Request.Close` sent right
+after the reply gets `UnknownObject`, and the inhibition then stays until the caller leaves the
+bus (measured on xdg-desktop-portal-kde; a one-shot `busctl` call leaks it for good). Close is
+retried while the object is missing. Probe the portal from a long-lived process, not `busctl`.
 
 ## Decisions not visible from the code
 

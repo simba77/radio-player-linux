@@ -10,11 +10,13 @@
 
 #include <QDBusConnection>
 #include <QDBusMessage>
+#include <QDBusObjectPath>
 #include <QList>
 #include <QObject>
 #include <QProcess>
 #include <QStringList>
 #include <QTemporaryFile>
+#include <QVariantMap>
 
 namespace radio::test {
 
@@ -67,6 +69,55 @@ public:
 public slots:
     uint Inhibit(const QString &application, const QString &reason);
     void UnInhibit(uint cookie);
+};
+
+// Двойник портала запрета засыпания (`org.freedesktop.portal.Inhibit`).
+//
+// Метод объявлен с сигнатурой портала, `sua{sv}`: флаги не тем типом шина до
+// него не доставит. Каждая блокировка — свой объект запроса, и снимается она
+// закрытием этого объекта, как у настоящего портала.
+class FakeInhibitPortal : public QObject {
+    Q_OBJECT
+    Q_CLASSINFO("D-Bus Interface", "org.freedesktop.portal.Inhibit")
+public:
+    struct Call {
+        QString window;
+        uint flags = 0;
+        QVariantMap options;
+    };
+    QList<Call> calls;
+    // Пути закрытых запросов — снятые блокировки.
+    QStringList closed;
+    // Через сколько после ответа появляется объект запроса. У настоящего портала
+    // ответ обгоняет объект, и Close, пришедший сразу, получает UnknownObject.
+    int requestDelayMs = 0;
+
+    // Регистрирует службу на соединении.
+    bool registerOn(QDBusConnection connection);
+
+public slots:
+    QDBusObjectPath Inhibit(const QString &window, uint flags, const QVariantMap &options);
+
+private:
+    QDBusConnection connection_{QString()};
+};
+
+// Объект запроса, который портал отдаёт в ответ на Inhibit.
+class FakePortalRequest : public QObject {
+    Q_OBJECT
+    Q_CLASSINFO("D-Bus Interface", "org.freedesktop.portal.Request")
+public:
+    FakePortalRequest(FakeInhibitPortal *portal, const QString &path)
+        : QObject(portal), portal_(portal), path_(path)
+    {
+    }
+
+public slots:
+    void Close();
+
+private:
+    FakeInhibitPortal *portal_;
+    QString path_;
 };
 
 }  // namespace radio::test
