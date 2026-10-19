@@ -1,9 +1,13 @@
 #include "support.hpp"
 
+#include <QDeadlineTimer>
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
+#include <QMetaObject>
 #include <QTemporaryDir>
+#include <QTest>
+#include <QTimer>
 
 #include <catch2/catch_test_case_info.hpp>
 #include <catch2/catch_test_macros.hpp>
@@ -62,6 +66,29 @@ void writeFile(const QString &path, const QByteArray &data)
     QFile file(path);
     REQUIRE(file.open(QIODevice::WriteOnly));
     file.write(data);
+}
+
+QTimer *timer(const QObject *owner, const QString &name)
+{
+    auto *found = owner->findChild<QTimer *>(name);
+    REQUIRE(found != nullptr);
+    return found;
+}
+
+void fire(QTimer *timer)
+{
+    REQUIRE(QMetaObject::invokeMethod(timer, "timeout", Qt::DirectConnection));
+}
+
+bool waitUntil(const std::function<bool()> &condition, int timeoutMs)
+{
+    const QDeadlineTimer deadline(timeoutMs);
+    while (!condition()) {
+        if (deadline.hasExpired())
+            return false;
+        QTest::qWait(10);
+    }
+    return true;
 }
 
 }  // namespace radio::test

@@ -14,8 +14,11 @@ option(RADIO_BUILD_TESTS "Собирать тесты" ON)
 
 # Qt 6.4 — то, что есть в Ubuntu 24.04. CI собирает там, поэтому API новее
 # использовать нельзя, даже если локально стоит свежая версия.
-find_package(Qt6 6.4 REQUIRED COMPONENTS Core Network)
+find_package(Qt6 6.4 REQUIRED COMPONENTS Core Gui Network)
 qt_standard_project_setup()
+find_package(PkgConfig REQUIRED)
+# libmpv 0.36 — клиентский API 2.1.
+pkg_check_modules(MPV REQUIRED IMPORTED_TARGET mpv>=2.1)
 
 add_compile_options(-Wall -Wextra -Wpedantic)
 add_compile_definitions(QT_NO_CAST_TO_ASCII QT_NO_URL_CAST_FROM_STRING)
@@ -44,6 +47,18 @@ qt_add_resources(radio_core "catalogs"
     FILES radio_player/resources/catalogs/record.json
 )
 
+# Воспроизведение: libmpv, состояния плеера, метаданные и обложки. Окон не знает.
+add_library(radio_playback STATIC
+    src/playback/artwork.cpp
+    src/playback/metadata/hls_daterange.cpp
+    src/playback/metadata/icy.cpp
+    src/playback/metadata/provider.cpp
+    src/playback/mpv_backend.cpp
+    src/playback/player.cpp
+)
+target_include_directories(radio_playback PUBLIC src/playback)
+target_link_libraries(radio_playback PUBLIC radio_core Qt6::Gui PRIVATE PkgConfig::MPV)
+
 if(RADIO_BUILD_TESTS)
     find_package(Catch2 3 REQUIRED)
     find_package(Qt6 REQUIRED COMPONENTS Test Widgets)
@@ -53,8 +68,13 @@ if(RADIO_BUILD_TESTS)
         tests/http_server.cpp
         tests/main.cpp
         tests/support.cpp
+        tests/test_artwork.cpp
         tests/test_catalog.cpp
+        tests/test_hls_provider.cpp
+        tests/test_icy_provider.cpp
+        tests/test_libmpv.cpp
         tests/test_models.cpp
+        tests/test_player.cpp
         tests/test_playlist_io.cpp
         tests/test_settings.cpp
         tests/test_settings_store.cpp
@@ -62,6 +82,6 @@ if(RADIO_BUILD_TESTS)
         tests/test_storage.cpp
     )
     target_compile_definitions(radio-tests PRIVATE RADIO_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
-    target_link_libraries(radio-tests PRIVATE radio_core Catch2::Catch2 Qt6::Test Qt6::Widgets)
+    target_link_libraries(radio-tests PRIVATE radio_playback Catch2::Catch2 Qt6::Test Qt6::Widgets)
     catch_discover_tests(radio-tests PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 endif()

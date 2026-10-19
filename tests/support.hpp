@@ -14,6 +14,11 @@
 
 #include <catch2/catch_tostring.hpp>
 
+#include <functional>
+
+class QObject;
+class QTimer;
+
 namespace radio::test {
 
 // Временный каталог текущего теста. Удаляется после теста.
@@ -24,6 +29,14 @@ QString sourcePath(const QString &relative);
 QByteArray readFile(const QString &path);
 // Пишет файл, создавая недостающие каталоги.
 void writeFile(const QString &path, const QByteArray &data);
+
+// Таймер объекта по имени (`objectName`).
+QTimer *timer(const QObject *owner, const QString &name);
+// Имитирует срабатывание таймера: настоящие интервалы измеряются секундами,
+// поэтому проверяется факт, что таймер взведён, а срабатывание вызывается руками.
+void fire(QTimer *timer);
+// Крутит цикл событий, пока условие не выполнится; false — если вышло время.
+bool waitUntil(const std::function<bool()> &condition, int timeoutMs = 5000);
 
 }  // namespace radio::test
 

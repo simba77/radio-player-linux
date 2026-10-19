@@ -55,7 +55,7 @@ devenv:
 	$(VENV)/bin/pip install --quiet --requirement requirements-dev.txt
 
 deps-cpp:
-	sudo apt install -y cmake ninja-build g++ pkg-config qt6-base-dev catch2
+	sudo apt install -y cmake ninja-build g++ pkg-config qt6-base-dev libmpv-dev catch2
 
 deps:
 	sudo apt install -y libmpv2 python3-mpv \
