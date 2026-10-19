@@ -23,7 +23,7 @@ BUILD_DIR := build/cmake
 CLANG_FORMAT := $(VENV)/bin/clang-format
 CXX_SOURCES = $(shell find src tests -name '*.cpp' -o -name '*.hpp')
 
-.PHONY: help run probe deps deps-i18n deps-cpp devenv check lint shellcheck format typecheck test coverage icons i18n-update i18n-release install uninstall deb clean cpp-build cpp-test cpp-format cpp-lint
+.PHONY: help run probe deps deps-i18n deps-cpp devenv check lint shellcheck format typecheck test coverage icons i18n-update i18n-release install uninstall deb clean cpp-build cpp-test cpp-format cpp-lint cpp-i18n-update
 
 help:
 	@echo "make deps      — установить системные зависимости (нужен sudo)"
@@ -48,6 +48,7 @@ help:
 	@echo "make cpp-build — собрать C++-версию в $(BUILD_DIR)"
 	@echo "make cpp-test  — собрать и прогнать тесты C++-версии"
 	@echo "make cpp-format — отформатировать C++ (clang-format)"
+	@echo "make cpp-i18n-update — обновить translations/cpp/*.ts строками из C++"
 	@echo "make cpp-lint  — проверить форматирование C++"
 
 devenv:
@@ -55,7 +56,8 @@ devenv:
 	$(VENV)/bin/pip install --quiet --requirement requirements-dev.txt
 
 deps-cpp:
-	sudo apt install -y cmake ninja-build g++ pkg-config qt6-base-dev libmpv-dev catch2 dbus
+	sudo apt install -y cmake ninja-build g++ pkg-config qt6-base-dev qt6-tools-dev qt6-l10n-tools \
+		libqt6svg6 libmpv-dev catch2 dbus
 
 deps:
 	sudo apt install -y libmpv2 python3-mpv \
@@ -125,6 +127,10 @@ cpp-build:
 
 cpp-test: cpp-build
 	ctest --test-dir $(BUILD_DIR) --output-on-failure -j $(shell nproc)
+
+# Строки интерфейса в C++-коде → каталоги translations/cpp/*.ts.
+cpp-i18n-update:
+	cmake --build $(BUILD_DIR) --target i18n_update
 
 cpp-format: $(VENV_PY)
 	$(CLANG_FORMAT) -i $(CXX_SOURCES)

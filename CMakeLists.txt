@@ -14,7 +14,7 @@ option(RADIO_BUILD_TESTS "Собирать тесты" ON)
 
 # Qt 6.4 — то, что есть в Ubuntu 24.04. CI собирает там, поэтому API новее
 # использовать нельзя, даже если локально стоит свежая версия.
-find_package(Qt6 6.4 REQUIRED COMPONENTS Core DBus Gui Network)
+find_package(Qt6 6.4 REQUIRED COMPONENTS Core DBus Gui LinguistTools Network Widgets)
 qt_standard_project_setup()
 find_package(PkgConfig REQUIRED)
 # libmpv 0.36 — клиентский API 2.1.
@@ -71,6 +71,44 @@ add_library(radio_desktop STATIC
 target_include_directories(radio_desktop PUBLIC src/desktop)
 target_link_libraries(radio_desktop PUBLIC radio_playback Qt6::DBus)
 
+# Интерфейс: окно, трей, настройки, язык. Единственный слой, знающий о виджетах.
+add_library(radio_ui STATIC
+    src/ui/i18n.cpp
+    src/ui/icons.cpp
+    src/ui/main_window.cpp
+    src/ui/now_playing.cpp
+    src/ui/settings/catalogs_tab.cpp
+    src/ui/settings/general_tab.cpp
+    src/ui/settings/settings_dialog.cpp
+    src/ui/settings/stations_tab.cpp
+    src/ui/tray.cpp
+)
+target_include_directories(radio_ui PUBLIC src/ui)
+target_link_libraries(radio_ui PUBLIC radio_desktop Qt6::Widgets)
+# Иконка приложения на случай запуска без установки: в теме её ещё нет.
+qt_add_resources(radio_ui "icons"
+    PREFIX "/icons"
+    BASE radio_player/resources/icons/hicolor/scalable/apps
+    FILES radio_player/resources/icons/hicolor/scalable/apps/io.github.simba77.RadioPlayer.svg
+)
+
+# Переводы собираются при сборке и встраиваются в программу. Английский каталог
+# содержит только формы множественного числа: исходные строки уже английские.
+set(RADIO_TS_RU ${CMAKE_SOURCE_DIR}/translations/cpp/radio_player_ru.ts)
+set(RADIO_TS_EN ${CMAKE_SOURCE_DIR}/translations/cpp/radio_player_en.ts)
+qt_add_lrelease(radio_ui TS_FILES ${RADIO_TS_RU} ${RADIO_TS_EN} QM_FILES_OUTPUT_VARIABLE RADIO_QM_FILES)
+qt_add_resources(radio_ui "translations"
+    PREFIX "/i18n"
+    BASE ${CMAKE_CURRENT_BINARY_DIR}
+    FILES ${RADIO_QM_FILES}
+)
+add_custom_target(i18n_update
+    COMMAND Qt6::lupdate -no-obsolete ${CMAKE_SOURCE_DIR}/src -ts ${RADIO_TS_RU}
+    COMMAND Qt6::lupdate -no-obsolete -pluralonly ${CMAKE_SOURCE_DIR}/src -ts ${RADIO_TS_EN}
+    COMMENT "Обновление каталогов переводов строками из кода"
+    VERBATIM
+)
+
 if(RADIO_BUILD_TESTS)
     find_package(Catch2 3 REQUIRED)
     find_package(Qt6 REQUIRED COMPONENTS Test Widgets)
@@ -85,6 +123,7 @@ if(RADIO_BUILD_TESTS)
         tests/test_autostart.cpp
         tests/test_catalog.cpp
         tests/test_hls_provider.cpp
+        tests/test_i18n.cpp
         tests/test_icy_provider.cpp
         tests/test_libmpv.cpp
         tests/test_models.cpp
@@ -97,9 +136,13 @@ if(RADIO_BUILD_TESTS)
         tests/test_single_instance.cpp
         tests/test_station_store.cpp
         tests/test_storage.cpp
+        tests/test_ui.cpp
     )
-    target_compile_definitions(radio-tests PRIVATE RADIO_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
-    target_link_libraries(radio-tests PRIVATE radio_desktop Catch2::Catch2 Qt6::Test Qt6::Widgets)
+    target_compile_definitions(radio-tests PRIVATE
+        RADIO_SOURCE_DIR="${CMAKE_SOURCE_DIR}"
+        RADIO_LUPDATE="$<TARGET_FILE:Qt6::lupdate>"
+    )
+    target_link_libraries(radio-tests PRIVATE radio_ui Catch2::Catch2 Qt6::Test)
     # Код 4 — тест пропущен (например, без dbus-daemon): для ctest это не падение.
     catch_discover_tests(radio-tests PROPERTIES
         ENVIRONMENT "QT_QPA_PLATFORM=offscreen"
