@@ -3,8 +3,11 @@ radio-player (2.0.0) unstable; urgency=medium
   * Rewrite in C++ with Qt 6 Widgets and libmpv.
   * Inhibit sleep through the xdg-desktop-portal, falling back to the
     PowerManagement interface.
+  * List every Radio Record station in the bundled catalog.
+  * Let the buffer play out when the network drops.
+  * Stop mpv from keeping played audio, which grew memory by up to 200 MiB.
 
- -- simba77 <itenterprise105@gmail.com>  Mon, 19 Oct 2026 00:00:00 +0300
+ -- simba77 <itenterprise105@gmail.com>  Wed, 21 Oct 2026 00:00:00 +0300
 
 radio-player (1.0.0) unstable; urgency=medium
 

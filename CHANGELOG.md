@@ -3,9 +3,14 @@
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and the project uses [Semantic Versioning](https://semver.org/).
 
-## [2.0.0] — 2026-10-19
+## [2.0.0] — 2026-10-21
 
 Rewritten in C++. Settings, station edits and cover art carry over from 1.0.0 untouched.
+
+### Added
+
+- The Radio Record catalog lists all 117 stations of radiorecord.ru instead of 6; `make catalog`
+  regenerates it from the site, keeping the ids, so station edits survive.
 
 ### Changed
 
@@ -18,9 +23,14 @@ Rewritten in C++. Settings, station edits and cover art carry over from 1.0.0 un
 - Cached catalogs are downloaded once more after the upgrade: their file names changed.
 - The bundled catalog moved to `data/catalogs/record.json`; 1.0.0 keeps its last downloaded copy
   but receives no further catalog updates.
+- Losing the network no longer cuts off a stream that is already playing: the buffer, about 20 s,
+  plays out and covers a short Wi-Fi drop, and a break soon after the network returns is
+  reconnected without the usual pause.
 
 ### Fixed
 
+- Memory grew by up to 200 MiB during long playback: mpv kept the audio already played for
+  seeking back.
 - Quitting during a catalog update recorded it as done, so the next start skipped the check.
 - A deleted catalog cache was never restored: its ETag was still sent and the server answered 304.
 - A timed-out HLS master playlist left the station without track info until a restart.
