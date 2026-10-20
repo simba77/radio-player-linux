@@ -246,26 +246,102 @@ TEST_CASE_METHOD(PlayerFixture, "playback cancels the stall watchdog")
 
 // MARK: - Сеть
 
-TEST_CASE_METHOD(PlayerFixture, "network loss starts reconnecting")
+TEST_CASE_METHOD(PlayerFixture, "network loss before the sound starts reconnecting")
+{
+    // Звука ещё нет — доигрывать нечего.
+    player.play(FIRST);
+    player.onNetworkReachable(false);
+    CHECK(player.isReconnecting());
+}
+
+TEST_CASE_METHOD(PlayerFixture, "network loss lets the buffer play out")
+{
+    // Перезапуск потока выбросил бы буфер, который перекрывает короткую пропажу Wi-Fi.
+    startPlaying();
+    player.onNetworkReachable(false);
+
+    CHECK(player.isPlaying());
+    CHECK(mpv->played == QStringList{FIRST.url});
+    CHECK_FALSE(timer("reconnectTimer")->isActive());
+}
+
+TEST_CASE_METHOD(PlayerFixture, "a buffer run dry without network waits the pause")
 {
     startPlaying();
     player.onNetworkReachable(false);
+    emit mpv->endFile(EndReason::Eof);
+
     CHECK(player.isReconnecting());
+    CHECK(mpv->played == QStringList{FIRST.url});
+    CHECK(timer("reconnectTimer")->isActive());
 }
 
 TEST_CASE_METHOD(PlayerFixture, "network return retries immediately")
 {
     // Ждать конца трёхсекундного цикла, когда сеть уже вернулась, незачем.
     startPlaying();
+    emit mpv->endFile(EndReason::Error);
     player.onNetworkReachable(false);
     player.onNetworkReachable(true);
     CHECK(mpv->played == QStringList{FIRST.url, FIRST.url});
+}
+
+TEST_CASE_METHOD(PlayerFixture, "network return keeps the stream that survived")
+{
+    startPlaying();
+    player.onNetworkReachable(false);
+    player.onNetworkReachable(true);
+
+    CHECK(player.isPlaying());
+    CHECK(mpv->played == QStringList{FIRST.url});
+}
+
+TEST_CASE_METHOD(PlayerFixture, "a break soon after the network returns reconnects at once")
+{
+    // HLS бросает поток, пока сети нет, а mpv сообщает об этом, лишь доиграв буфер —
+    // когда сеть уже вернулась.
+    startPlaying();
+    player.onNetworkReachable(false);
+    player.onNetworkReachable(true);
+    emit mpv->endFile(EndReason::Eof);
+
+    CHECK(mpv->played == QStringList{FIRST.url, FIRST.url});
+}
+
+TEST_CASE_METHOD(PlayerFixture, "a break long after the network returns waits the pause")
+{
+    startPlaying();
+    player.onNetworkReachable(false);
+    player.onNetworkReachable(true);
+    // Однократный таймер, отработав, гаснет — так и истекает окно.
+    timer("networkReturnTimer")->stop();
+    emit mpv->endFile(EndReason::Eof);
+
+    CHECK(mpv->played == QStringList{FIRST.url});
+    CHECK(timer("reconnectTimer")->isActive());
+}
+
+TEST_CASE_METHOD(PlayerFixture, "a new stream closes the network return window")
+{
+    // Новое соединение пропажу сети не застало.
+    const bool stopped = GENERATE(true, false);
+    startPlaying();
+    player.onNetworkReachable(false);
+    player.onNetworkReachable(true);
+    if (stopped)
+        player.stop();
+    else
+        player.play(SECOND);
+
+    CHECK_FALSE(timer("networkReturnTimer")->isActive());
 }
 
 TEST_CASE_METHOD(PlayerFixture, "network events are ignored when not playing")
 {
     player.onNetworkReachable(false);
     CHECK_FALSE(player.isReconnecting());
+    player.onNetworkReachable(true);
+    CHECK_FALSE(timer("networkReturnTimer")->isActive());
 }
 
 // MARK: - Переключение станций

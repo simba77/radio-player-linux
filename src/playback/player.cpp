@@ -42,7 +42,8 @@ PlayerManager::PlayerManager(StationStore *store, MpvBackend *mpv, QObject *pare
       reconnectTimer_(makeTimer(this, u"reconnectTimer"_s, RECONNECT_INTERVAL_MS, false)),
       stallTimer_(makeTimer(this, u"stallTimer"_s, STALL_TIMEOUT_MS, true)),
       blinkTimer_(makeTimer(this, u"blinkTimer"_s, BLINK_INTERVAL_MS, false)),
-      volumeSaveTimer_(makeTimer(this, u"volumeSaveTimer"_s, VOLUME_SAVE_DELAY_MS, true))
+      volumeSaveTimer_(makeTimer(this, u"volumeSaveTimer"_s, VOLUME_SAVE_DELAY_MS, true)),
+      networkReturnTimer_(makeTimer(this, u"networkReturnTimer"_s, NETWORK_RETURN_WINDOW_MS, true))
 {
     const QJsonObject state = storage::loadState();
     volume_ = int(std::clamp<qint64>(json::integer(state.value("volume"_L1)).value_or(100), 0, 100));
@@ -107,6 +108,7 @@ void PlayerManager::stop()
     shouldBePlaying_ = false;
     reconnectTimer_->stop();
     stallTimer_->stop();
+    networkReturnTimer_->stop();
     stopBlinking();
     stopMetadata();
     mpv_->stop();
@@ -167,7 +169,7 @@ void PlayerManager::shutdown()
         volumeSaveTimer_->stop();
         saveVolume();
     }
-    for (QTimer *timer : {reconnectTimer_, stallTimer_, blinkTimer_})
+    for (QTimer *timer : {reconnectTimer_, stallTimer_, blinkTimer_, networkReturnTimer_})
         timer->stop();
     stopMetadata();
     artwork_->cancelAll();
@@ -181,6 +183,8 @@ void PlayerManager::loadAndPlay(const Station &station)
     // Не трогает намерение и метаданные — используется и при первом запуске,
     // и при каждом переподключении.
     stallTimer_->stop();
+    // Новое соединение пропажу сети не застало — его обрыв ждёт обычной паузы.
+    networkReturnTimer_->stop();
     const QString error = mpv_->play(station.url);
     if (!error.isEmpty()) {
         fail(tr("Could not open the stream: %1").arg(error));
@@ -281,6 +285,12 @@ void PlayerManager::beginReconnecting()
     setState(PlaybackState::Reconnecting);
     blinkTimer_->start();
     reconnectDelayMs_ = RECONNECT_INTERVAL_MS;
+    // Обрыв вскоре после возвращения сети — её последствие, а не падение сервера:
+    // волны слушателей не будет, и выжидать паузу незачем.
+    if (networkReturnTimer_->isActive()) {
+        attemptReconnect();
+        return;
+    }
     armReconnect();
 }
 
@@ -330,12 +340,21 @@ void PlayerManager::onNetworkReachable(bool reachable)
     if (!shouldBePlaying_)
         return;
     if (!reachable) {
-        beginReconnecting();
+        // Звук идёт — пусть доиграет буфер: короткую пропажу Wi-Fi он перекроет.
+        // Перезапуск выбросил бы его и оборвал звук на секунды раньше.
+        if (!isPlaying())
+            beginReconnecting();
         return;
     }
     // Сеть вернулась — пробуем сразу, не дожидаясь интервала цикла.
-    if (isReconnecting())
+    if (isReconnecting()) {
         attemptReconnect();
+        return;
+    }
+    // Буфер перекрыл пропажу, но поток мог уже оборваться внутри: HLS в ffmpeg
+    // бросает его, не сумев перечитать плейлист, и mpv узнает об этом, лишь
+    // доиграв буфер. Такой обрыв переподключаем без паузы.
+    networkReturnTimer_->start();
 }
 
 // MARK: - Метаданные

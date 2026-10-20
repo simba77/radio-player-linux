@@ -182,6 +182,14 @@ for every listener at once, and without jitter they all come back in the same se
 returning triggers an immediate attempt regardless of the pause, and a stall watchdog (6 s of
 buffering) turns a hung stream into a reconnect.
 
+Losing the network does not touch a stream that is already sounding: the buffer (about 20 s —
+FFmpeg starts a live HLS stream three segments behind the edge) plays out and covers a short
+Wi-Fi drop, while restarting the stream would throw it away. The break, if it comes, arrives the
+usual way — end of file or the stall watchdog. FFmpeg's HLS demuxer gives the stream up as soon
+as a playlist reload fails, but mpv reports it only once the buffer runs dry, often after the
+network is back; so for a minute after the network returns a break is put down to our own outage
+and reconnected at once — no listener wave to spread out there.
+
 Audio already played is not kept at all: mpv's back buffer is off (`demuxer-max-back-bytes=0`).
 By default it keeps 50 MiB and borrows the unused forward space as well, which on a live stream is
 nearly all of it — up to 200 MiB of audio nobody will seek back to.
