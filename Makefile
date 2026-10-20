@@ -15,7 +15,7 @@ CHECKS_DIR := build/checks
 CLANG_FORMAT := $(VENV)/bin/clang-format
 CXX_SOURCES = $(shell find src tests -name '*.cpp' -o -name '*.hpp')
 
-.PHONY: help deps devenv build run test check lint shellcheck sanitize format i18n-update icons release install uninstall deb clean
+.PHONY: help deps devenv build run test check lint shellcheck sanitize format i18n-update icons catalog release install uninstall deb clean
 
 help:
 	@echo "make deps        — установить зависимости сборки (нужен sudo)"
@@ -29,6 +29,7 @@ help:
 	@echo "make format      — отформатировать код"
 	@echo "make i18n-update — обновить translations/*.ts строками из кода"
 	@echo "make icons       — перерисовать PNG из SVG-иконки"
+	@echo "make catalog     — обновить каталог Radio Record со станциями с radiorecord.ru"
 	@echo "make install     — установить в $(PREFIX)"
 	@echo "make uninstall   — удалить из $(PREFIX)"
 	@echo "make deb         — собрать .deb и .tar.gz в dist/"
@@ -85,6 +86,11 @@ i18n-update: build
 
 icons:
 	sh scripts/render_icons.sh
+
+# Каталог скачивают все установленные копии приложения прямо из ветки main,
+# поэтому результат стоит просмотреть в git diff до коммита.
+catalog:
+	$(PYTHON) -I scripts/update_record_catalog.py
 
 release:
 	cmake -S . -B $(RELEASE_DIR) -G Ninja -DCMAKE_BUILD_TYPE=Release -DRADIO_BUILD_TESTS=OFF

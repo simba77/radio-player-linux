@@ -118,6 +118,9 @@ A station's `id` is its stable key: the app recognises the station across update
 never change, while `name` and `url` may. Add your own catalog under **Настройки → Каталоги**
 (Settings → Catalogs) by pointing it at such a file.
 
+The built-in Radio Record catalog is generated from the station list on radiorecord.ru:
+`make catalog` brings it up to date, keeping the ids and the order of known stations.
+
 The URL of a catalog station cannot be edited directly. To change it, use «Сделать копию»
 (Duplicate): you get your own station with the same stream while the original is hidden. That way
 your edits never conflict with catalog updates.

@@ -69,7 +69,14 @@ TEST_CASE("the bundled catalog is valid")
     const QList<Catalog> catalogs = catalog::loadBundled();
     REQUIRE(catalogs.size() == 1);
     CHECK(catalogs[0].id == "record"_L1);
-    CHECK(catalogs[0].stations.size() == 6);
+
+    // Ни одна станция не отсеяна проверками: опечатка в каталоге молча
+    // отняла бы её у всех пользователей.
+    QFile file(u":/catalogs/record.json"_s);
+    REQUIRE(file.open(QIODevice::ReadOnly));
+    const QJsonArray declared = QJsonDocument::fromJson(file.readAll())["stations"_L1].toArray();
+    CHECK_FALSE(declared.isEmpty());
+    CHECK(catalogs[0].stations.size() == declared.size());
 }
 
 TEST_CASE("load initial falls back to bundled without a cache")
