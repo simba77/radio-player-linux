@@ -182,6 +182,10 @@ for every listener at once, and without jitter they all come back in the same se
 returning triggers an immediate attempt regardless of the pause, and a stall watchdog (6 s of
 buffering) turns a hung stream into a reconnect.
 
+Audio already played is not kept at all: mpv's back buffer is off (`demuxer-max-back-bytes=0`).
+By default it keeps 50 MiB and borrows the unused forward space as well, which on a live stream is
+nearly all of it — up to 200 MiB of audio nobody will seek back to.
+
 ## Desktop integration
 
 Everything in `src/desktop/` must degrade silently, because none of it is guaranteed to exist:

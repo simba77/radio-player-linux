@@ -60,6 +60,13 @@ LibMpv::LibMpv(const QMap<QByteArray, QByteArray> &options, QObject *parent) : M
     }
     mpv_set_option_string(mpv_, "video", "no");
     mpv_set_option_string(mpv_, "ytdl", "no");
+    // Проигранный звук mpv хранит для перемотки назад: 50 МиБ своих плюс
+    // свободная часть буфера вперёд, которая у живого потока почти вся пуста.
+    // В эфире назад не перематывают, а память за полтора часа росла на 200 МиБ.
+    mpv_set_option_string(mpv_, "demuxer-max-back-bytes", "0");
+    // Живой поток вперёд не накопить — он приходит в реальном времени, так что
+    // потолок лишь страхует от сломанного потока. 16 МиБ — минуты даже lossless.
+    mpv_set_option_string(mpv_, "demuxer-max-bytes", "16MiB");
     for (auto it = options.cbegin(); it != options.cend(); ++it)
         mpv_set_option_string(mpv_, it.key().constData(), it.value().constData());
     if (mpv_initialize(mpv_) < 0) {
